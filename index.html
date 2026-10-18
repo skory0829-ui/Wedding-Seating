@@ -70,7 +70,9 @@ input,textarea{font-family:inherit}
 .room.edit .it:active .body{transform:none}
 .ln{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:max(10px,3.1cqw);line-height:1;white-space:nowrap}
 .lf{font-size:max(7.5px,1.9cqw);letter-spacing:.03em;opacity:.72;white-space:nowrap;line-height:1.15}
-.it.head .ln{font-size:max(9px,2.4cqw)}
+.it.head .ln{font-size:2.5cqw}
+.it.head .body.hcol{padding:0 .6cqw}
+.it.head .body.hcol .ln{white-space:normal;text-align:center;line-height:1.1;overflow-wrap:anywhere}
 .it.head .lf{color:var(--terra-lt);opacity:1}
 .pip{position:absolute;width:2cqw;height:2cqw;min-width:6px;min-height:6px;transform:translate(-50%,-50%);
   border-radius:50%;border:1.5px solid rgba(22,40,63,.45);background:var(--cream)}
@@ -622,14 +624,27 @@ function geom(t){
   }
   /* long table: seats split across both long sides; the head table seats one side, facing the room */
   var one=t.id==="head", top=one?n:Math.ceil(n/2), bot=n-top;
-  var len=Math.max(top,2)*4+1.5, dep=one?4.2:5, m=2.6;
-  var w=len+1, h=one?(m+dep+.6):(m*2+dep);
+  var span=Math.max(top,2)*4+1.5, len=span, dep=one?4.2:5, m=2.6, hcol=false;
+  if(one){
+    /* the head table never gets narrower than its label needs; when the name won't fit on
+       one line beside the count (a table for two, or a long custom name), stack and wrap it */
+    var FS=2.5, CF=1.9;
+    len=Math.max(span,17);
+    var nameW=t.name.length*0.56*FS, cntW=(n+"/"+n).length*0.55*CF;
+    if(t.rot){ hcol=true; dep=Math.max(dep,4*0.56*FS+1.6); }
+    else if(nameW+cntW+2.5>len){
+      hcol=true;
+      var lines=Math.max(1,Math.ceil(nameW/(len-2)));
+      dep=Math.max(dep,lines*FS*1.15+4.4); /* the count line has a 7.5px floor, so leave room for it on small phones */
+    }
+  }
+  var w=len+1, h=one?(m+dep+.6):(m*2+dep), off=.5+(len-span)/2;
   var body={x:.5,y:m,w:len,h:dep};
-  for(i=0;i<top;i++) pips.push({x:.5+len*(i+.5)/top,y:m/2});
-  for(i=0;i<bot;i++) pips.push({x:.5+len*(i+.5)/bot,y:m+dep+m/2});
+  for(i=0;i<top;i++) pips.push({x:off+span*(i+.5)/top,y:m/2});
+  for(i=0;i<bot;i++) pips.push({x:off+span*(i+.5)/bot,y:m+dep+m/2});
   if(t.rot) return {w:h,h:w,body:{x:body.y,y:body.x,w:body.h,h:body.w},
-    pips:pips.map(function(p){return {x:p.y,y:p.x};}),col:true};
-  return {w:w,h:h,body:body,pips:pips,col:false};
+    pips:pips.map(function(p){return {x:p.y,y:p.x};}),col:true,hcol:hcol};
+  return {w:w,h:h,body:body,pips:pips,col:hcol,hcol:hcol};
 }
 function dimsOf(kind,o){ if(kind==="t"){ var g=geom(o); return {w:g.w,h:g.h}; } return {w:o.w,h:o.h}; }
 function rectOf(id,x,y,d){ return {id:id,x0:x-d.w/2,y0:y-d.h/2,x1:x+d.w/2,y1:y+d.h/2}; }
@@ -827,7 +842,7 @@ function itemHTML(t,ed,clash){
   var b=g.body;
   var label=isHead?(t.rot?"Head":t.name):(t.name.replace(/^table\s*/i,"")||"•");
   return '<button class="'+cls+'" '+(ed?'data-drag="t"':'data-act="table"')+' data-id="'+t.id+'" aria-label="'+esc(t.name)+'" style="'+boxStyle(t.x,t.y,g.w,g.h)+'">'+pips+
-    '<span class="body'+(g.col?" col":"")+'" style="left:'+r2(b.x)+'cqw;top:'+r2(b.y)+'cqw;width:'+r2(b.w)+'cqw;height:'+r2(b.h)+'cqw">'+
+    '<span class="body'+(g.col?" col":"")+(g.hcol?" hcol":"")+'" style="left:'+r2(b.x)+'cqw;top:'+r2(b.y)+'cqw;width:'+r2(b.w)+'cqw;height:'+r2(b.h)+'cqw">'+
     '<span class="ln">'+esc(label)+'</span><span class="lf">'+taken+'/'+t.seats+'</span></span></button>';
 }
 function danceHTML(d,ed,clash){
