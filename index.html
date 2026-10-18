@@ -132,6 +132,7 @@ textarea.field{min-height:130px;resize:vertical;line-height:1.45;font-size:15px}
 .grow{display:flex;align-items:center;gap:10px;background:rgba(243,236,221,.05);
   border:1px solid rgba(243,236,221,.1);border-radius:10px;padding:10px 12px}
 .gname{flex:1;font-size:14.5px;text-align:left;padding:0}
+.gwith{display:block;font-size:11px;color:var(--terra-lt);margin-top:2px}
 .gwhere{font-size:11px;color:var(--olive-lt);white-space:nowrap}
 .gwhere.un{color:var(--terra-lt)}
 .filters{display:flex;gap:6px;margin-top:10px}
@@ -178,10 +179,35 @@ textarea.field{min-height:130px;resize:vertical;line-height:1.45;font-size:15px}
 .linkbox{width:100%;font-size:11px;word-break:break-all;background:rgba(15,29,47,.6);
   border:1px solid rgba(243,236,221,.18);border-radius:9px;color:rgba(243,236,221,.8);padding:10px;
   margin-top:8px;max-height:90px;overflow-y:auto}
+/* venue printout: hidden on screen, the only thing printed */
+#printout{display:none}
 @media print{
-  body{background:#fff;color:#000}
-  .tabs,.hdr .saveflag,.scrim{display:none}
+  @page{margin:.45in}
+  html,body{background:#fff!important;color:var(--navy);padding:0!important;min-height:0}
+  body>*:not(#printout){display:none!important}
+  #printout{display:block}
 }
+#printout{font-family:"Karla",ui-sans-serif,system-ui,sans-serif;color:var(--navy);
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+#printout h1{font-family:"Fraunces",Georgia,serif;font-size:22pt;margin:0;font-weight:600}
+#printout h2{font-family:"Fraunces",Georgia,serif;font-size:14pt;margin:0 0 8px;font-weight:600;
+  border-bottom:2px solid var(--terra);padding-bottom:3px}
+.pmeta{font-size:10pt;color:#5b6675;margin:3px 0 14px}
+.pplan{margin:0 auto 4px}
+.pplan .hall{border-radius:10px;padding:8px}
+.pbreak{break-before:page;page-break-before:always}
+.ptables{columns:2;column-gap:.35in;margin-top:6px}
+.ptable{break-inside:avoid;page-break-inside:avoid;margin:0 0 14px}
+.ptable h3{font-family:"Fraunces",Georgia,serif;font-size:12pt;margin:0 0 3px;font-weight:600;
+  display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #d8d2c4;padding-bottom:2px}
+.ptable h3 span{font-family:"Karla",sans-serif;font-size:9pt;font-weight:500;color:#5b6675}
+.ptable ol{margin:3px 0 0;padding-left:20px;font-size:10.5pt;line-height:1.38}
+.ptable li.empty{color:#9aa3ae;font-style:italic}
+.palpha{columns:3;column-gap:.3in;font-size:9.5pt;margin-top:6px}
+.prow{display:flex;justify-content:space-between;gap:8px;break-inside:avoid;
+  border-bottom:1px dotted #cfc8b8;padding:2px 0}
+.prow b{font-weight:700;white-space:nowrap}
+.pwarn{margin-top:16px;padding:8px 10px;border:1px solid var(--terra);border-radius:6px;font-size:9.5pt}
 </style>
 </head>
 <body>
@@ -201,6 +227,7 @@ textarea.field{min-height:130px;resize:vertical;line-height:1.45;font-size:15px}
 
 <main id="view"></main>
 <div id="sheetHost"></div>
+<div id="printout"></div>
 <div id="toastHost"></div>
 
 <script>
@@ -396,7 +423,9 @@ function encodePayload(withCfg){
   var geo=allTables().map(function(t){ return [t.shape==="long"?1:0, r1(t.x), r1(t.y), t.rot?1:0]; });
   var lay={h:L.h, dance:{x:r1(L.dance.x),y:r1(L.dance.y),w:r1(L.dance.w),h:r1(L.dance.h)},
     marks:L.marks.map(function(m){return {id:m.id,label:m.label,x:r1(m.x),y:r1(m.y),w:r1(m.w),h:r1(m.h)};})};
-  var compact=[1, packTable(state.head), state.tables.map(packTable), loose, {g:geo, L:lay}];
+  var pm={}; state.guests.forEach(function(g){ if(g.party) (pm[g.party]=pm[g.party]||[]).push(g.name); });
+  var parties=Object.keys(pm).map(function(k){return pm[k];}).filter(function(a){return a.length>1;});
+  var compact=[1, packTable(state.head), state.tables.map(packTable), loose, {g:geo, L:lay, P:parties}];
   var obj = withCfg ? [2, sync.cfg||null, compact] : compact;
   var json=JSON.stringify(obj);
   return (withCfg?"s=":"c=")+encodeURIComponent(btoa(unescape(encodeURIComponent(json))));
@@ -426,6 +455,10 @@ function decodeCompact(p){
     });
   }
   if(ex&&ex.L&&ex.L.dance) st.layout=ex.L;
+  if(ex&&ex.P) ex.P.forEach(function(names){
+    var pid=uid("p");
+    names.forEach(function(n){ var id=gid(n); guests.forEach(function(g){ if(g.id===id) g.party=pid; }); });
+  });
   return st;
 }
 function readLink(){
@@ -469,21 +502,99 @@ function setSeatCount(id,n){
 function clearSeat(id,idx){
   updateTable(id,function(t){ var p=t.people.slice(); p[idx]=null; return Object.assign({},t,{people:p}); });
 }
-function assign(tableId,idx,gid){
-  function strip(t){ return Object.assign({},t,{people:t.people.map(function(p){return p===gid?null:p;})}); }
-  function place(t){ var p=t.people.slice(); p[idx]=gid; return Object.assign({},t,{people:p}); }
-  state.head = tableId==="head" ? place(strip(state.head)) : strip(state.head);
-  state.tables = state.tables.map(function(t){ return t.id===tableId ? place(strip(t)) : strip(t); });
+/* ---- couples & families: guests sharing a `party` id always sit together ---- */
+function guestById(id){ for(var i=0;i<state.guests.length;i++) if(state.guests[i].id===id) return state.guests[i]; return null; }
+function partyOf(gid){
+  var g=guestById(gid); if(!g||!g.party) return [gid];
+  return state.guests.filter(function(x){return x.party===g.party;}).map(function(x){return x.id;});
+}
+function partnersOf(gid){ return partyOf(gid).filter(function(x){return x!==gid;}); }
+function namesOf(ids){
+  var n=ids.map(function(i){return guestName(i)||"someone";});
+  return n.length<3 ? n.join(" and ") : n.slice(0,-1).join(", ")+", and "+n[n.length-1];
+}
+function linkGuests(a,b){
+  var ga=guestById(a), gb=guestById(b); if(!ga||!gb||a===b) return;
+  var pid=ga.party||gb.party||uid("p"), old=[ga.party,gb.party].filter(Boolean);
+  state.guests.forEach(function(g){ if(g===ga||g===gb||(g.party&&old.indexOf(g.party)>-1)) g.party=pid; });
   save();
 }
-function addGuests(names){
-  var have={}; state.guests.forEach(function(g){have[g.name.toLowerCase()]=1;});
-  var added=0;
-  names.forEach(function(n){ if(!have[n.toLowerCase()]){ state.guests.push({id:uid("g"),name:n}); have[n.toLowerCase()]=1; added++; } });
-  save(); return added;
+function unlinkGuest(gid){
+  var g=guestById(gid); if(!g||!g.party) return;
+  var pid=g.party; delete g.party;
+  var rest=state.guests.filter(function(x){return x.party===pid;});
+  if(rest.length===1) delete rest[0].party;
+  save();
 }
+/* how far apart two seats are, in "chairs": around a round table, or along the same side of a long one */
+function seatDist(t,a,b){
+  var n=t.seats;
+  if(shapeOf(t)==="round"){ var d=Math.abs(a-b); return Math.min(d,n-d); }
+  if(t.id==="head") return Math.abs(a-b);
+  var top=Math.ceil(n/2), bot=n-top;
+  function pos(i){ return i<top ? [0,(i+.5)/top*top] : [1,(i-top+.5)/(bot||1)*top]; }
+  var pa=pos(a), pb=pos(b);
+  return Math.abs(pa[1]-pb[1])+(pa[0]!==pb[0]?0.6:0);
+}
+function nearestEmpty(t,people,idx){
+  var best=-1, bd=1e9;
+  for(var i=0;i<people.length;i++) if(!people[i]){ var d=seatDist(t,idx,i); if(d<bd){ bd=d; best=i; } }
+  return best;
+}
+/* pick the open seat where the whole party ends up closest together */
+function bestStart(t,people,k){
+  var best=-1, bc=1e9;
+  for(var i=0;i<people.length;i++){
+    if(people[i]) continue;
+    var p=people.slice(), cost=0; p[i]="x";
+    for(var j=0;j<k;j++){ var s=nearestEmpty(t,p,i); if(s<0){ cost+=100; } else { cost+=seatDist(t,i,s); p[s]="x"; } }
+    if(cost<bc){ bc=cost; best=i; }
+  }
+  return best;
+}
+/* seat a guest (idx = a specific seat, or null for the best open one) and bring their party along */
+function assign(tableId,idx,gid){
+  var members=partyOf(gid), others=members.filter(function(m){return m!==gid;});
+  function strip(t){ return Object.assign({},t,{people:t.people.map(function(p){return members.indexOf(p)>-1?null:p;})}); }
+  state.head=strip(state.head); state.tables=state.tables.map(strip);
+  var t=tableById(tableId), people=t.people.slice();
+  if(idx==null) idx=bestStart(t,people,others.length);
+  if(idx<0){ save(); return {left:members}; }
+  people[idx]=gid;
+  var left=[];
+  others.forEach(function(o){ var j=nearestEmpty(t,people,idx); if(j<0) left.push(o); else people[j]=o; });
+  updateTable(tableId,function(x){ return Object.assign({},x,{people:people}); });
+  return {left:left};
+}
+function seatedToast(r,gid,tableName){
+  if(r.left.length) toast("No room at "+tableName+" for "+namesOf(r.left)+". They're unseated for now.");
+  else if(partyOf(gid).length>1) toast("Seated "+namesOf(partyOf(gid))+" together");
+}
+/* "Jim & Pam Halpert" -> ["Jim Halpert","Pam Halpert"]; "Jim Halpert and Pam Beesly" -> both as written */
+function splitCouple(n){
+  var parts=n.split(/\s+(?:&|\+|and)\s+/i).map(function(x){return x.trim();}).filter(Boolean);
+  if(parts.length<2) return [n];
+  var lastWords=parts[parts.length-1].split(" "), surname=lastWords.length>1?lastWords[lastWords.length-1]:"";
+  return parts.map(function(p,i){ return (i<parts.length-1 && p.indexOf(" ")<0 && surname) ? p+" "+surname : p; });
+}
+/* groups: arrays of names; a group of 2+ gets linked, including guests already on the list */
+function addGroups(groups){
+  var byName={}; state.guests.forEach(function(g){ byName[g.name.toLowerCase()]=g.id; });
+  var added=0, linked=0;
+  groups.forEach(function(gr){
+    var ids=gr.map(function(n){
+      var k=n.toLowerCase();
+      if(!byName[k]){ var g={id:uid("g"),name:n}; state.guests.push(g); byName[k]=g.id; added++; }
+      return byName[k];
+    });
+    if(ids.length>1){ for(var i=1;i<ids.length;i++) linkGuests(ids[0],ids[i]); linked++; }
+  });
+  save(); return {added:added,linked:linked};
+}
+function addGuests(names){ return addGroups(names.map(function(n){return [n];})).added; }
 function addOneGuest(name){ var g={id:uid("g"),name:name}; state.guests.push(g); save(); return g.id; }
 function removeGuest(id){
+  unlinkGuest(id);
   state.guests=state.guests.filter(function(g){return g.id!==id;});
   state.head.people=state.head.people.map(function(p){return p===id?null:p;});
   state.tables=state.tables.map(function(t){return Object.assign({},t,{people:t.people.map(function(p){return p===id?null:p;})});});
@@ -658,7 +769,7 @@ function ensureLayout(){
 }
 
 /* ---------------- name parsing ---------------- */
-function parseNames(raw){
+function parseGroups(raw){
   var lines=raw.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean)
     .map(function(l){return l.replace(/^\s*(\d+[.)]|[-•*])\s+/,"");});
   var withComma=lines.filter(function(l){return l.indexOf(",")>-1;}).length;
@@ -670,12 +781,24 @@ function parseNames(raw){
   });
   if(out.length && /^(first\s*name|name|guest|full\s*name)\b/i.test(out[0])) out=out.slice(1);
   var seen={},res=[];
-  out.forEach(function(n){
-    n=n.replace(/\s+/g," ").trim();
-    if(!n||n.length>60) return;
-    var k=n.toLowerCase(); if(seen[k]) return; seen[k]=1; res.push(n);
+  out.forEach(function(line){
+    var gr=[];
+    splitCouple(line.replace(/\s+/g," ").trim()).forEach(function(n){
+      if(!n||n.length>60) return;
+      var k=n.toLowerCase(); if(seen[k]) return; seen[k]=1; gr.push(n);
+    });
+    if(gr.length) res.push(gr);
   });
   return res;
+}
+function parseNames(raw){ return [].concat.apply([],parseGroups(raw)); }
+function previewText(raw){
+  var gs=raw.trim()?parseGroups(raw):[], n=0, c=0;
+  gs.forEach(function(g){ n+=g.length; if(g.length>1) c++; });
+  if(!n) return "";
+  var first=[].concat.apply([],gs).slice(0,3).join(", ");
+  return "Reading "+n+" names, starting with "+first+(n>3?"…":"")+
+    (c?" Includes "+c+" couple"+(c>1?"s or families":" or family")+" who will be kept together.":"");
 }
 
 /* ---------------- rendering ---------------- */
@@ -731,7 +854,7 @@ function hallHTML(){
         '<button class="tbtn terra" data-act="doneedit">Done</button></div>'+
       '<p class="ehint">Drag anything to move it. Tap it to change shape, seats, or size. Drag an orange dot to resize.'+
         (nc?' <b>'+nc+' things overlap</b> and are outlined in orange.':'')+'</p>'
-    : '<div class="tools"><span class="sp"></span><button class="tbtn soft" data-act="editlayout">Edit layout</button></div>';
+    : '<div class="tools"><button class="tbtn soft" data-act="venueprint">Print for venue</button><span class="sp"></span><button class="tbtn soft" data-act="editlayout">Edit layout</button></div>';
   return '<div class="hallwrap"><div class="hall">'+tools+
     '<div class="room'+(ed?' edit':'')+'" id="room" style="height:'+r2(L.h)+'cqw">'+inner+'</div>'+
     (ed?'</div></div>':'<div class="legend">'+
@@ -748,7 +871,9 @@ function guestListHTML(){
   if(!list.length) return '<div class="empty">Nobody here yet.</div>';
   return list.map(function(g){
     var s=sm[g.id];
-    return '<div class="grow"><button class="gname" data-act="assign" data-id="'+g.id+'">'+esc(g.name)+'</button>'+
+    var pw=partnersOf(g.id);
+    return '<div class="grow"><button class="gname" data-act="assign" data-id="'+g.id+'">'+esc(g.name)+
+      (pw.length?'<small class="gwith">with '+esc(namesOf(pw))+'</small>':'')+'</button>'+
       '<span class="gwhere'+(s?"":" un")+'">'+(s?esc(s.tableName):"Not placed")+'</span>'+
       '<button class="clr" data-act="rmguest" data-id="'+g.id+'">✕</button></div>';
   }).join("");
@@ -763,23 +888,28 @@ function guestsHTML(){
     '</div>'+
     '<div class="glist" id="glist">'+guestListHTML()+'</div>'+
     '<div class="card" style="margin-top:14px"><h3>Add one guest</h3>'+
-      '<div class="btnrow"><input class="field" id="newname" style="flex:1;min-width:140px" placeholder="Name">'+
+      '<div class="btnrow"><input class="field" id="newname" style="flex:1;min-width:140px" placeholder="Name, or Jim &amp; Pam Halpert">'+
       '<button class="btn primary" data-act="addone">Add</button></div></div>'+
   '</div>';
 }
 function setupHTML(){
-  var preview=ui.raw.trim()?parseNames(ui.raw):[];
+  var preview=previewText(ui.raw);
   return '<div class="panel">'+
     '<div class="card"><h3>Bring in the guest list</h3>'+
-      '<p class="hint">Paste names, one per line. A spreadsheet or Zola export works too — paste the rows and the first two columns get read as first and last name.</p>'+
-      '<textarea class="field" id="bulk" placeholder="Grandma Ruth&#10;Jim Halpert&#10;Pam Beesly">'+esc(ui.raw)+'</textarea>'+
-      '<p class="hint" id="bulkinfo" style="margin-top:8px">'+(preview.length?("Reading "+preview.length+" names, starting with "+esc(preview.slice(0,3).join(", "))+(preview.length>3?"…":"")):"")+'</p>'+
+      '<p class="hint">Paste names, one per line. A spreadsheet or Zola export works too — paste the rows and the first two columns get read as first and last name. Write couples as <b>Jim &amp; Pam Halpert</b> and they\'ll always be seated together. That works for guests already on the list too.</p>'+
+      '<textarea class="field" id="bulk" placeholder="Grandma Ruth&#10;Jim &amp; Pam Halpert&#10;Dwight Schrute">'+esc(ui.raw)+'</textarea>'+
+      '<p class="hint" id="bulkinfo" style="margin-top:8px">'+esc(preview)+'</p>'+
       '<div class="btnrow"><button class="btn primary" data-act="addbulk">Add guests</button></div></div>'+
 
     '<div class="card"><h3>Tables in the room</h3>'+
       '<p class="hint">New tables drop into an open spot in the room. To move things, change table shapes, or add long tables, tap <b>Edit layout</b> on the Hall tab.</p>'+
       stepperHTML("Tables", state.tables.length, 1, 60, "tablecount")+
       '<div class="btnrow"><button class="btn ghost" data-act="alleight">Set every table to 8</button></div></div>'+
+
+    '<div class="card"><h3>Send it to the venue</h3>'+
+      '<p class="hint">One printout with the floor plan, every table and who sits there, and an alphabetical list for finding seats. Use <b>Print or save PDF</b> to make a PDF you can attach to an email (on iPhone, tap Share in the print preview, then Mail). <b>Email as text</b> puts the same lists right into an email.</p>'+
+      '<div class="btnrow"><button class="btn primary" data-act="venueprint">Print or save PDF</button>'+
+      '<button class="btn ghost" data-act="venueemail">Email as text</button></div></div>'+
 
     syncCardHTML()+
 
@@ -874,6 +1004,59 @@ function render(){
   renderSheet();
 }
 
+/* ---------------- venue printout ---------------- */
+function lastFirstKey(n){ var w=n.trim().split(/\s+/); return (w[w.length-1]+" "+w.slice(0,-1).join(" ")).toLowerCase(); }
+function seatedRows(){
+  var sm=seatMap();
+  return state.guests.filter(function(g){return sm[g.id];})
+    .sort(function(a,b){ return lastFirstKey(a.name).localeCompare(lastFirstKey(b.name)); })
+    .map(function(g){ return {name:g.name, table:sm[g.id].tableName}; });
+}
+function unseatedNames(){
+  var sm=seatMap();
+  return state.guests.filter(function(g){return !sm[g.id];}).map(function(g){return g.name;})
+    .sort(function(a,b){ return lastFirstKey(a).localeCompare(lastFirstKey(b)); });
+}
+function printTables(){ return allTables().filter(function(t){ return t.people.some(Boolean); }); }
+function venueHTML(){
+  var L=state.layout, rows=seatedRows(), un=unseatedNames(), ts=printTables();
+  var date=new Date().toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"});
+  var room=danceHTML(L.dance,false,false)+
+    L.marks.map(function(m){ return markHTML(m,false,false); }).join("")+
+    allTables().map(function(t){ return itemHTML(t,false,false); }).join("");
+  var plan='<div class="pplan" style="width:min(100%, calc(8.4in * 100 / '+L.h+'))"><div class="hall">'+
+    '<div class="room" style="height:'+r2(L.h)+'cqw">'+room+'</div></div></div>';
+  var tables='<div class="ptables">'+ts.map(function(t){
+    var names=t.people.filter(Boolean).map(function(p){ return guestName(p)||""; });
+    return '<div class="ptable"><h3>'+esc(t.name)+'<span>'+names.length+' guest'+(names.length===1?'':'s')+'</span></h3><ol>'+
+      names.map(function(n){ return '<li>'+esc(n)+'</li>'; }).join("")+'</ol></div>';
+  }).join("")+'</div>';
+  var alpha='<div class="palpha">'+rows.map(function(r){
+    return '<div class="prow"><span>'+esc(r.name)+'</span><b>'+esc(r.table.replace(/^table\s*/i,"Table "))+'</b></div>';
+  }).join("")+'</div>';
+  return '<h1>Reception Seating</h1>'+
+    '<p class="pmeta">'+rows.length+' guests at '+ts.length+' tables · updated '+esc(date)+'</p>'+
+    plan+
+    '<div class="pbreak"></div><h2>Tables</h2>'+tables+
+    '<div class="pbreak"></div><h2>Find your seat</h2>'+alpha+
+    (un.length?'<div class="pwarn"><b>Not seated yet ('+un.length+'):</b> '+esc(un.join(", "))+'</div>':'');
+}
+function venueText(){
+  var rows=seatedRows(), un=unseatedNames(), ts=printTables();
+  var date=new Date().toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"});
+  var out=["RECEPTION SEATING","Updated "+date+" · "+rows.length+" guests at "+ts.length+" tables",""];
+  ts.forEach(function(t){
+    var names=t.people.filter(Boolean).map(function(p){ return guestName(p)||""; });
+    out.push(t.name.toUpperCase()+" ("+names.length+")");
+    names.forEach(function(n){ out.push("  "+n); });
+    out.push("");
+  });
+  out.push("ALPHABETICAL");
+  rows.forEach(function(r){ out.push(r.name+" — "+r.table); });
+  if(un.length){ out.push("","NOT SEATED YET"); un.forEach(function(n){ out.push(n); }); }
+  return out.join("\n");
+}
+
 /* ---------------- sheets ---------------- */
 function renderSheet(){
   var host=document.getElementById("sheetHost");
@@ -904,7 +1087,9 @@ function renderSheet(){
     if(q && !exact) items+='<button class="pitem" style="border-color:#C2603F" data-act="createguest">Add “'+esc(ui.pickQuery.trim())+'” as a new guest</button>';
     items+=list.map(function(g){
       var w=sm[g.id];
+      var pw=partnersOf(g.id);
       return '<button class="pitem" data-act="choose" data-id="'+g.id+'">'+esc(g.name)+
+        (pw.length?'<small>Comes with '+esc(namesOf(pw))+', who sit'+(pw.length>1?'':'s')+' next to them</small>':'')+
         (w?'<small>Currently at '+esc(w.tableName)+' — tap to move</small>':"")+'</button>';
     }).join("");
     if(!list.length && !q) items='<div class="empty">No guests yet. Add them under Setup, or type a name above.</div>';
@@ -960,17 +1145,43 @@ function renderSheet(){
         '<button class="btn ghost" data-act="allshape" data-v="long">Make all long</button></div>';
   }
   else if(s.kind==="assign"){
-    title="Seat "+esc(guestName(s.guestId)||"");
-    body='<div class="plist">'+allTables().map(function(t){
-      var open=t.people.filter(function(p){return !p;}).length;
-      return '<button class="pitem" data-act="tochoose" data-id="'+t.id+'"'+(open?"":' disabled style="opacity:.35"')+'>'+
-        esc(t.name)+'<small>'+(open?(open+" open seat"+(open>1?"s":"")):"Full")+'</small></button>';
-    }).join("")+'</div>';
+    if(!guestById(s.guestId)){ ui.sheet=null; host.innerHTML=""; return; }
+    var party=partyOf(s.guestId), mates=partnersOf(s.guestId), need=party.length;
+    title=esc(guestName(s.guestId)||"");
+    body='<p class="sub" style="margin-top:0">Kept together with</p>'+
+      (mates.length
+        ? mates.map(function(m){
+            return '<div class="grow" style="margin-bottom:6px"><span class="gname">'+esc(guestName(m))+'</span>'+
+              '<button class="clr" data-act="unlink" data-id="'+m+'">Unlink</button></div>';
+          }).join("")
+        : '<p class="hint">Nobody yet. Link a partner or family and they\'ll always be seated side by side. Move one and the others follow.</p>')+
+      '<div class="btnrow"><button class="btn ghost" data-act="linkmenu">+ Keep together with someone</button></div>'+
+      '<p class="sub">'+(need>1?'Seat all '+need+' at':'Seat at')+'</p>'+
+      '<div class="plist" style="max-height:none">'+allTables().map(function(t){
+        /* seats this party already holds at a table count as open for them */
+        var open=t.people.filter(function(p){ return !p||party.indexOf(p)>-1; }).length;
+        var note=!open?"Full":(open+" open seat"+(open>1?"s":"")+(open<need?" — not enough for all "+need:""));
+        return '<button class="pitem" data-act="tochoose" data-id="'+t.id+'"'+(open?"":' disabled style="opacity:.35"')+'>'+
+          esc(t.name)+'<small'+(open&&open<need?' style="color:#E08B67"':'')+'>'+note+'</small></button>';
+      }).join("")+'</div>';
+  }
+  else if(s.kind==="link"){
+    var lp=partyOf(s.guestId), lq=ui.pickQuery.trim().toLowerCase(), lsm=seatMap();
+    title="Keep "+esc((guestName(s.guestId)||"").split(" ")[0])+" with…";
+    var cand=state.guests.filter(function(g){ return lp.indexOf(g.id)<0 && g.name.toLowerCase().indexOf(lq)>-1; })
+      .sort(function(a,b){ return a.name.localeCompare(b.name); });
+    body='<input class="field" id="lsearch" placeholder="Search guests" value="'+esc(ui.pickQuery)+'">'+
+      '<div class="plist" style="margin-top:10px">'+(cand.length?cand.map(function(g){
+        var pw=partnersOf(g.id), w=lsm[g.id];
+        return '<button class="pitem" data-act="linkto" data-id="'+g.id+'">'+esc(g.name)+
+          (pw.length?'<small>Already with '+esc(namesOf(pw))+'. They\'ll all be kept together</small>':'')+
+          (w?'<small>At '+esc(w.tableName)+'</small>':'')+'</button>';
+      }).join(""):'<div class="empty">No one matches.</div>')+'</div>';
   }
   host.innerHTML='<div class="scrim" data-act="scrim"><div class="sheet" id="sheet">'+
     '<div class="grab"></div><div class="sheethdr"><span class="sname">'+title+'</span>'+right+
     '<button class="x" data-act="closesheet">✕</button></div>'+body+'</div>';
-  var f=document.getElementById("psearch")||document.getElementById("tname")||document.getElementById("mlabel");
+  var f=document.getElementById("psearch")||document.getElementById("lsearch")||document.getElementById("tname")||document.getElementById("mlabel");
   if(f && ui.focusField){ f.focus(); if(f.setSelectionRange) f.setSelectionRange(f.value.length,f.value.length); }
   ui.focusField=false;
 }
@@ -995,6 +1206,7 @@ document.addEventListener("click",function(e){
     case "table": openSheet({kind:"table",id:id}); break;
     case "scrim": case "closesheet":
       if(ui.sheet&&ui.sheet.kind==="seat"){ openSheet({kind:"table",id:ui.sheet.tableId}); }
+      else if(ui.sheet&&ui.sheet.kind==="link"){ openSheet({kind:"assign",guestId:ui.sheet.guestId}); }
       else { ui.sheet=null; renderSheet(); render(); }
       break;
     case "rename": ui.editingName=true; ui.focusField=true; renderSheet(); break;
@@ -1009,6 +1221,21 @@ document.addEventListener("click",function(e){
       var st=tableById(t.id); if(typeof st.x==="number") clampObj("t",st);
       if(dropped.length) toast(dropped.join(" and ")+" moved back to the guest list");
       render(); break;
+    }
+
+    case "venueprint": {
+      if(!Object.keys(seatMap()).length){ toast("Seat some guests first"); break; }
+      document.getElementById("printout").innerHTML=venueHTML();
+      /* give the fonts and layout a beat to settle before the print sheet opens */
+      setTimeout(function(){ window.print(); },250);
+      break;
+    }
+    case "venueemail": {
+      if(!Object.keys(seatMap()).length){ toast("Seat some guests first"); break; }
+      var vt=venueText(), subj="Reception seating chart";
+      if(navigator.share){ navigator.share({title:subj,text:vt}).catch(function(){}); }
+      else { location.href="mailto:?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(vt); }
+      break;
     }
 
     /* ---- layout editing ---- */
@@ -1106,8 +1333,33 @@ document.addEventListener("click",function(e){
       pushUndo(); RL.h=nh; save(); render(); break;
     }
     case "seat": ui.sheet={kind:"seat",tableId:ui.sheet.id,idx:i}; ui.pickQuery=""; renderSheet(); break;
-    case "clearseat": clearSeat(ui.sheet.id,i); renderSheet(); renderCounts(); break;
-    case "choose": assign(ui.sheet.tableId,ui.sheet.idx,id); openSheet({kind:"table",id:ui.sheet.tableId}); renderCounts(); break;
+    case "clearseat": {
+      var ct=tableById(ui.sheet.id), cg=ct.people[i], cp=cg?partyOf(cg):[];
+      cp.forEach(function(m){ var w=seatMap()[m]; if(w) clearSeat(w.tableId,w.idx); });
+      if(cp.length>1) toast("Unseated "+namesOf(cp));
+      render(); break;
+    }
+    case "choose": {
+      var ctn=tableById(ui.sheet.tableId).name, cr=assign(ui.sheet.tableId,ui.sheet.idx,id);
+      openSheet({kind:"table",id:ui.sheet.tableId}); render(); seatedToast(cr,id,ctn); break;
+    }
+    case "linkmenu": ui.sheet={kind:"link",guestId:ui.sheet.guestId}; ui.pickQuery=""; renderSheet(); break;
+    case "linkto": {
+      var la=ui.sheet.guestId, lsm2=seatMap();
+      linkGuests(la,id);
+      /* if either is already seated, pull the party together around them */
+      var anchor=lsm2[la]?la:(lsm2[id]?id:null), lmsg="Linked "+namesOf(partyOf(la));
+      if(anchor){
+        var aw=lsm2[anchor], lr=assign(aw.tableId,aw.idx,anchor);
+        lmsg=lr.left.length ? "Linked. No room at "+aw.tableName+" for "+namesOf(lr.left)+" yet"
+                            : "Linked and seated together at "+aw.tableName;
+      }
+      openSheet({kind:"assign",guestId:la}); render(); toast(lmsg); break;
+    }
+    case "unlink": {
+      var ug=ui.sheet.guestId; unlinkGuest(id);
+      openSheet({kind:"assign",guestId:ug}); render(); toast(guestName(id)+" unlinked"); break;
+    }
     case "createguest": {
       var gid=addOneGuest(ui.pickQuery.trim());
       assign(ui.sheet.tableId,ui.sheet.idx,gid);
@@ -1115,21 +1367,25 @@ document.addEventListener("click",function(e){
     }
     case "assign": openSheet({kind:"assign",guestId:id}); break;
     case "tochoose": {
-      var tt=tableById(id), idx=tt.people.indexOf(null);
-      if(idx===-1) break;
-      assign(id,idx,ui.sheet.guestId); ui.sheet=null; renderSheet(); render(); toast("Seated at "+tt.name); break;
+      var tt=tableById(id), tg=ui.sheet.guestId, tr=assign(id,null,tg);
+      ui.sheet=null; render();
+      if(tr.left.length) seatedToast(tr,tg,tt.name);
+      else toast("Seated "+namesOf(partyOf(tg))+" at "+tt.name);
+      break;
     }
     case "rmguest": removeGuest(id); document.getElementById("glist").innerHTML=guestListHTML(); renderCounts(); break;
     case "filter": ui.filter=el.dataset.v; render(); break;
     case "addone": {
       var inp=document.getElementById("newname"), v=inp.value.trim();
       if(!v) break;
-      addGuests([v]); inp.value=""; render(); toast("Added "+v); break;
+      var ar=addGroups([splitCouple(v)]); inp.value=""; render();
+      toast(ar.linked?("Added "+splitCouple(v).join(" and ")+", kept together"):("Added "+v)); break;
     }
     case "addbulk": {
-      var names=parseNames(ui.raw);
-      if(!names.length){ toast("Nothing to add"); break; }
-      var added=addGuests(names); ui.raw=""; render(); toast("Added "+added+" guests"); break;
+      var groups=parseGroups(ui.raw);
+      if(!groups.length){ toast("Nothing to add"); break; }
+      var br=addGroups(groups); ui.raw=""; render();
+      toast("Added "+br.added+" guest"+(br.added===1?"":"s")+(br.linked?", "+br.linked+" kept together":"")); break;
     }
     case "tablecount": {
       var d=parseInt(el.dataset.d,10), cur=state.tables.length, want=Math.max(1,Math.min(60,cur+d));
@@ -1238,7 +1494,7 @@ document.addEventListener("click",function(e){
 document.addEventListener("input",function(e){
   var t=e.target;
   if(t.id==="gsearch"){ ui.query=t.value; document.getElementById("glist").innerHTML=guestListHTML(); }
-  else if(t.id==="psearch"){
+  else if(t.id==="psearch"||t.id==="lsearch"){
     ui.pickQuery=t.value; ui.focusField=true; renderSheet();
   }
   else if(t.id==="mlabel" && ui.sheet && ui.sheet.kind==="lmark"){
@@ -1250,8 +1506,7 @@ document.addEventListener("input",function(e){
   }
   else if(t.id==="bulk"){
     ui.raw=t.value;
-    var p=ui.raw.trim()?parseNames(ui.raw):[];
-    document.getElementById("bulkinfo").textContent = p.length?("Reading "+p.length+" names, starting with "+p.slice(0,3).join(", ")+(p.length>3?"…":"")):"";
+    document.getElementById("bulkinfo").textContent = previewText(ui.raw);
   }
 });
 document.addEventListener("change",function(e){
