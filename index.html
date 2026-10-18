@@ -53,7 +53,9 @@ input,textarea{font-family:inherit}
   box-shadow:inset 0 0 0 1px rgba(22,40,63,.14);container-type:inline-size}
 
 /* the room: everything is placed in cqw units, so 1 unit = 1% of the room's width */
-.room{position:relative;width:100%;border-radius:8px;background:var(--cream);
+.roomfit{position:relative;width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.roomsizer{position:relative}
+.room{position:relative;width:100%;border-radius:8px;background:var(--cream);transform-origin:0 0;
   box-shadow:inset 0 0 0 1px rgba(22,40,63,.12)}
 .room.edit{background-color:var(--cream-2);
   background-image:radial-gradient(rgba(22,40,63,.18) 1px,transparent 1.3px);background-size:5cqw 5cqw}
@@ -422,8 +424,8 @@ function encodePayload(withCfg){
   var sm=seatMap();
   var loose=state.guests.filter(function(g){return !sm[g.id];}).map(function(g){return g.name;});
   var L=state.layout, r1=function(v){return Math.round((+v||0)*10)/10;};
-  var geo=allTables().map(function(t){ return [t.shape==="long"?1:0, r1(t.x), r1(t.y), t.rot?1:0]; });
-  var lay={h:L.h, dance:{x:r1(L.dance.x),y:r1(L.dance.y),w:r1(L.dance.w),h:r1(L.dance.h)},
+  var geo=allTables().map(function(t){ var a=[t.shape==="long"?1:0, r1(t.x), r1(t.y), t.rot?1:0]; if(typeof t.len==="number") a.push(r1(t.len)); return a; });
+  var lay={w:RW(), h:L.h, dance:{x:r1(L.dance.x),y:r1(L.dance.y),w:r1(L.dance.w),h:r1(L.dance.h)},
     marks:L.marks.map(function(m){return {id:m.id,label:m.label,x:r1(m.x),y:r1(m.y),w:r1(m.w),h:r1(m.h)};})};
   var pm={}; state.guests.forEach(function(g){ if(g.party) (pm[g.party]=pm[g.party]||[]).push(g.name); });
   var parties=Object.keys(pm).map(function(k){return pm[k];}).filter(function(a){return a.length>1;});
@@ -453,7 +455,7 @@ function decodeCompact(p){
     [head].concat(tables).forEach(function(t,i){
       var g=ex.g[i]; if(!g) return;
       if(t.id!=="head") t.shape=g[0]?"long":"round";
-      t.x=g[1]; t.y=g[2]; t.rot=g[3]?1:0;
+      t.x=g[1]; t.y=g[2]; t.rot=g[3]?1:0; if(typeof g[4]==="number") t.len=g[4];
     });
   }
   if(ex&&ex.L&&ex.L.dance) st.layout=ex.L;
@@ -608,9 +610,11 @@ function markById(id){ var m=state.layout.marks; for(var i=0;i<m.length;i++) if(
 function pushUndo(){ ui.undo.push(JSON.stringify(state)); if(ui.undo.length>40) ui.undo.shift(); }
 
 /* ---------------- layout + geometry ----------------
-   The room is 100 units wide and layout.h units long. Every item stores its
-   center (x,y) in those units; the page draws them in cqw, so 1 unit = 1% of width. */
+   The room is layout.w units wide (100 by default) and layout.h units long. Every item
+   stores its center (x,y) in those units. The page draws them in cqw (1 unit = 1% of the
+   hall's width), then scales the whole room down or up so its full width fits the screen. */
 var M=3;
+function RW(){ return (state.layout&&state.layout.w)||100; }
 function shapeOf(t){ return t.id==="head"?"long":(t.shape==="long"?"long":"round"); }
 function seatRange(t){
   if(t.id==="head") return [HEAD_MIN,HEAD_MAX];
@@ -625,11 +629,13 @@ function geom(t){
   /* long table: seats split across both long sides; the head table seats one side, facing the room */
   var one=t.id==="head", top=one?n:Math.ceil(n/2), bot=n-top;
   var span=Math.max(top,2)*4+1.5, len=span, dep=one?4.2:5, m=2.6, hcol=false;
+  if(one) len=Math.max(span,17);
+  /* a custom length (set in the layout editor) spreads the seats along the whole table */
+  if(typeof t.len==="number"){ len=Math.max(minLen(t),Math.min(RW()-4,t.len)); span=len; }
   if(one){
-    /* the head table never gets narrower than its label needs; when the name won't fit on
-       one line beside the count (a table for two, or a long custom name), stack and wrap it */
+    /* when the name won't fit on one line beside the count (a table for two, or a long
+       custom name), stack and wrap it */
     var FS=2.5, CF=1.9;
-    len=Math.max(span,17);
     var nameW=t.name.length*0.56*FS, cntW=(n+"/"+n).length*0.55*CF;
     if(t.rot){ hcol=true; dep=Math.max(dep,4*0.56*FS+1.6); }
     else if(nameW+cntW+2.5>len){
@@ -646,6 +652,12 @@ function geom(t){
     pips:pips.map(function(p){return {x:p.y,y:p.x};}),col:true,hcol:hcol};
   return {w:w,h:h,body:body,pips:pips,col:hcol,hcol:hcol};
 }
+/* shortest a long table can be and still fit its chairs (and, for the head table, its label) */
+function minLen(t){
+  var top=t.id==="head"?t.seats:Math.ceil(t.seats/2);
+  return Math.max(top*3+1.5, t.id==="head"?12:7);
+}
+function tableLen(t){ var g=geom(t); return t.rot?g.body.h:g.body.w; }
 function dimsOf(kind,o){ if(kind==="t"){ var g=geom(o); return {w:g.w,h:g.h}; } return {w:o.w,h:o.h}; }
 function rectOf(id,x,y,d){ return {id:id,x0:x-d.w/2,y0:y-d.h/2,x1:x+d.w/2,y1:y+d.h/2}; }
 function rectsAll(skip){
@@ -668,7 +680,7 @@ function clashes(){
 function ceil5(v){ return Math.ceil(v/5)*5; }
 function clampObj(kind,o){
   var d=dimsOf(kind,o), H=state.layout.h;
-  o.x=Math.min(Math.max(o.x,d.w/2),Math.max(d.w/2,100-d.w/2));
+  o.x=Math.min(Math.max(o.x,d.w/2),Math.max(d.w/2,RW()-d.w/2));
   o.y=Math.min(Math.max(o.y,d.h/2),Math.max(d.h/2,H-d.h/2));
 }
 function clampAll(){
@@ -676,19 +688,23 @@ function clampAll(){
   clampObj("x",state.layout.dance);
   state.layout.marks.forEach(function(m){ clampObj("x",m); });
 }
+function xExtent(){
+  var r=rectsAll(null);
+  return r.length ? [Math.min.apply(null,r.map(function(a){return a.x0;})), Math.max.apply(null,r.map(function(a){return a.x1;}))] : [0,0];
+}
 function maxBottom(){ return rectsAll(null).reduce(function(s,r){ return Math.max(s,r.y1); },0); }
 /* drop an item into the first open spot, scanning top-left to bottom-right; grow the room if it is full */
 function placeFree(o,kind){
   kind=kind||"t";
   var L=state.layout, d=dimsOf(kind,o), others=rectsAll(o), x, y;
   for(y=d.h/2+1; y<=L.h-d.h/2-1; y+=1){
-    for(x=d.w/2+1; x<=100-d.w/2-1; x+=1){
+    for(x=d.w/2+1; x<=RW()-d.w/2-1; x+=1){
       var r=rectOf("",x,y,d), ok=true;
       for(var i=0;i<others.length;i++) if(hits(r,others[i],1.2)){ ok=false; break; }
       if(ok){ o.x=x; o.y=y; return; }
     }
   }
-  o.x=50; o.y=L.h+d.h/2+2; L.h=ceil5(L.h+d.h+4);
+  o.x=RW()/2; o.y=L.h+d.h/2+2; L.h=ceil5(L.h+d.h+4);
 }
 
 /* ---- preset layouts ---- */
@@ -711,26 +727,27 @@ function flow(list,x0,x1,y0,gap){
   });
   return rows.length? y-gap : y0;
 }
-function placeHead(){ var h=state.head; h.rot=0; var hd=fp(h); h.x=50; h.y=M+hd.h/2; return M+hd.h; }
+function placeHead(){ var h=state.head; h.rot=0; var hd=fp(h); h.x=RW()/2; h.y=M+hd.h/2; return M+hd.h; }
 function presetSides(){
   var L=state.layout, y0=placeHead()+5;
-  var dw=Math.min(40,Math.max(16,L.dance.w||30)), sideW=(100-dw)/2-2*M;
+  var W=RW(), dw=Math.min(40,Math.max(16,L.dance.w||30)), sideW=Math.min(40,(W-dw)/2-2*M), cx=W/2;
   var ts=state.tables, half=Math.ceil(ts.length/2);
-  var b=Math.max(flow(ts.slice(0,half),M,M+sideW,y0,2), flow(ts.slice(half),100-M-sideW,100-M,y0,2), y0+30);
-  L.dance={x:50,y:(y0+b)/2,w:dw,h:b-y0};
+  var b=Math.max(flow(ts.slice(0,half),cx-dw/2-M-sideW,cx-dw/2-M,y0,2), flow(ts.slice(half),cx+dw/2+M,cx+dw/2+M+sideW,y0,2), y0+30);
+  L.dance={x:cx,y:(y0+b)/2,w:dw,h:b-y0};
   L.h=Math.max(50,ceil5(b+M+1));
 }
 function presetRows(){
   var L=state.layout, dy=placeHead()+3;
   var dw=Math.min(70,Math.max(24,L.dance.w||40)), dh=Math.min(30,Math.max(14,L.dance.h||20));
-  L.dance={x:50,y:dy+dh/2,w:dw,h:dh};
-  var b=flow(state.tables,M,100-M,dy+dh+5,3);
+  var W=RW(), cx=W/2, half=Math.min(W/2-M,47);
+  L.dance={x:cx,y:dy+dh/2,w:dw,h:dh};
+  var b=flow(state.tables,cx-half,cx+half,dy+dh+5,3);
   L.h=Math.max(50,ceil5(b+M+1));
 }
 function presetRing(){
   var L=state.layout, ts=state.tables, top=placeHead(), m=0, need=0;
   ts.forEach(function(t){ var d=fp(t), s=Math.max(d.w,d.h); m=Math.max(m,s); need+=s+2.5; });
-  var r0=need/(2*Math.PI), lim=50-m/2-M, rx, ry;
+  var W=RW(), r0=need/(2*Math.PI), lim=Math.min(50,W/2)-m/2-M, rx, ry;
   if(r0<=lim){ rx=ry=Math.min(lim,Math.max(r0,22)); }
   else { rx=lim; ry=Math.sqrt(Math.max(2*r0*r0-rx*rx,rx*rx)); }
   /* walk the oval and drop each table at an even distance along it (sized by its footprint),
@@ -746,7 +763,7 @@ function presetRing(){
     ts.forEach(function(t,j){
       var target=(at+sizes[j]/2)/tot*cum[N]; at+=sizes[j];
       while(k<N&&cum[k+1]<target) k++;
-      t.x=50+pts[k][0]; t.y=cy+pts[k][1];
+      t.x=W/2+pts[k][0]; t.y=cy+pts[k][1];
     });
     var r=ts.map(function(t){ return rectOf(t.id,t.x,t.y,fp(t)); });
     for(i=0;i<r.length;i++) for(var j=i+1;j<r.length;j++) if(hits(r[i],r[j],0.5)) return false;
@@ -755,9 +772,9 @@ function presetRing(){
   while(!lay() && ++tries<30) ry*=1.06;
   /* biggest dance floor that fits inside the ring without touching a table */
   var tr=ts.map(function(t){ return rectOf(t.id,t.x,t.y,fp(t)); }), dw=2*rx, dh=2*ry, g=0;
-  function free(){ var d=rectOf("d",50,cy,{w:dw,h:dh}); return !tr.some(function(r){ return hits(d,r,1.5); }); }
+  function free(){ var d=rectOf("d",W/2,cy,{w:dw,h:dh}); return !tr.some(function(r){ return hits(d,r,1.5); }); }
   while(!free() && ++g<200){ dw*=.97; dh*=.97; }
-  L.dance={x:50,y:cy,w:Math.max(12,dw),h:Math.max(10,dh)};
+  L.dance={x:W/2,y:cy,w:Math.max(12,dw),h:Math.max(10,dh)};
   L.h=Math.max(50,ceil5(cy+ry+m/2+M+1));
 }
 function finishPreset(){
@@ -772,11 +789,12 @@ function finishPreset(){
 function ensureLayout(){
   var L=state.layout, changed=false;
   if(!L||!L.dance){
-    state.layout={h:100,dance:{x:50,y:50,w:30,h:40},marks:[]};
+    state.layout={w:100,h:100,dance:{x:50,y:50,w:30,h:40},marks:[]};
     presetSides(); return true;
   }
   if(!L.marks){ L.marks=[]; changed=true; }
   if(typeof L.h!=="number"){ L.h=100; changed=true; }
+  if(typeof L.w!=="number"){ L.w=100; changed=true; }
   allTables().forEach(function(t){
     if(typeof t.x!=="number"||typeof t.y!=="number"){ delete t.x; delete t.y; placeFree(t); changed=true; }
   });
@@ -831,6 +849,14 @@ function renderTabs(){
   });
 }
 function r2(v){ return Math.round(v*100)/100; }
+/* the room is laid out at W cqw wide, then scaled to fit the screen. On screen it never shrinks
+   below 62% (so tables stay readable on a phone); a room wider than that scrolls sideways.
+   The printout always fits the whole room. */
+function roomBox(L,html,fitAll){
+  var W=RW(), k=fitAll?100/W:Math.max(100/W,0.62);
+  return '<div class="roomfit"><div class="roomsizer" style="width:'+r2(W*k)+'cqw;height:'+r2(L.h*k)+'cqw">'+
+    html.replace("STYLE",'style="width:'+r2(W)+'cqw;height:'+r2(L.h)+'cqw;transform:scale('+k+')"')+'</div></div>';
+}
 function boxStyle(x,y,w,h){ return 'left:'+r2(x-w/2)+'cqw;top:'+r2(y-h/2)+'cqw;width:'+r2(w)+'cqw;height:'+r2(h)+'cqw'; }
 function itemHTML(t,ed,clash){
   var g=geom(t), taken=t.people.filter(Boolean).length, isHead=t.id==="head";
@@ -843,7 +869,9 @@ function itemHTML(t,ed,clash){
   var label=isHead?(t.rot?"Head":t.name):(t.name.replace(/^table\s*/i,"")||"•");
   return '<button class="'+cls+'" '+(ed?'data-drag="t"':'data-act="table"')+' data-id="'+t.id+'" aria-label="'+esc(t.name)+'" style="'+boxStyle(t.x,t.y,g.w,g.h)+'">'+pips+
     '<span class="body'+(g.col?" col":"")+(g.hcol?" hcol":"")+'" style="left:'+r2(b.x)+'cqw;top:'+r2(b.y)+'cqw;width:'+r2(b.w)+'cqw;height:'+r2(b.h)+'cqw">'+
-    '<span class="ln">'+esc(label)+'</span><span class="lf">'+taken+'/'+t.seats+'</span></span></button>';
+    '<span class="ln">'+esc(label)+'</span><span class="lf">'+taken+'/'+t.seats+'</span></span>'+
+    (ed&&shapeOf(t)==="long"?'<span class="knob" data-drag="t-size" style="'+(t.rot?'left:50%;margin-left:-8px;right:auto':'top:50%;margin-top:-8px;bottom:auto')+'"></span>':'')+
+    '</button>';
 }
 function danceHTML(d,ed,clash){
   return '<div class="dancefl'+(clash?" clash":"")+'"'+(ed?' data-drag="dance"':'')+' style="'+boxStyle(d.x,d.y,d.w,d.h)+'">'+
@@ -867,11 +895,11 @@ function hallHTML(){
         '<span class="sp"></span>'+
         '<button class="tbtn soft" data-act="undo"'+(ui.undo.length?'':' disabled')+'>Undo</button>'+
         '<button class="tbtn terra" data-act="doneedit">Done</button></div>'+
-      '<p class="ehint">Drag anything to move it. Tap it to change shape, seats, or size. Drag an orange dot to resize.'+
+      '<p class="ehint">Drag anything to move it. Tap it to change shape, seats, or size. Drag an orange dot to resize, including the ends of long tables and the head table.'+
         (nc?' <b>'+nc+' things overlap</b> and are outlined in orange.':'')+'</p>'
     : '<div class="tools"><button class="tbtn soft" data-act="venueprint">Print for venue</button><span class="sp"></span><button class="tbtn soft" data-act="editlayout">Edit layout</button></div>';
   return '<div class="hallwrap"><div class="hall">'+tools+
-    '<div class="room'+(ed?' edit':'')+'" id="room" style="height:'+r2(L.h)+'cqw">'+inner+'</div>'+
+    roomBox(L,'<div class="room'+(ed?' edit':'')+'" id="room" STYLE>'+inner+'</div>')+
     (ed?'</div></div>':'<div class="legend">'+
       '<span class="lg"><span class="lgdot" style="background:transparent;border-style:dashed"></span>Empty</span>'+
       '<span class="lg"><span class="lgdot" style="background:#C2603F;border-color:#C2603F"></span>Filled seat</span>'+
@@ -1014,8 +1042,11 @@ function segHTML(label,opts,cur,act){
 }
 function render(){
   renderTabs(); renderCounts();
+  /* a wide room scrolls sideways; keep the view where it was across redraws */
+  var rf=document.querySelector("#view .roomfit"); if(rf) ui.roomScroll=rf.scrollLeft;
   document.getElementById("view").innerHTML =
     ui.tab==="hall"?hallHTML(): ui.tab==="guests"?guestsHTML(): setupHTML();
+  rf=document.querySelector("#view .roomfit"); if(rf&&ui.roomScroll) rf.scrollLeft=ui.roomScroll;
   renderSheet();
 }
 
@@ -1039,8 +1070,8 @@ function venueHTML(){
   var room=danceHTML(L.dance,false,false)+
     L.marks.map(function(m){ return markHTML(m,false,false); }).join("")+
     allTables().map(function(t){ return itemHTML(t,false,false); }).join("");
-  var plan='<div class="pplan" style="width:min(100%, calc(8.4in * 100 / '+L.h+'))"><div class="hall">'+
-    '<div class="room" style="height:'+r2(L.h)+'cqw">'+room+'</div></div></div>';
+  var plan='<div class="pplan" style="width:min(100%, calc(8.4in * '+RW()+' / '+L.h+'))"><div class="hall">'+
+    roomBox(L,'<div class="room" STYLE>'+room+'</div>',true)+'</div></div>';
   var tables='<div class="ptables">'+ts.map(function(t){
     var names=t.people.filter(Boolean).map(function(p){ return guestName(p)||""; });
     return '<div class="ptable"><h3>'+esc(t.name)+'<span>'+names.length+' guest'+(names.length===1?'':'s')+'</span></h3><ol>'+
@@ -1118,14 +1149,16 @@ function renderSheet(){
     if(!ui.editingName) right='<button class="clr" data-act="rename">Rename</button>';
     body=(lHead?'':segHTML("Shape",[["round","Round"],["long","Long"]],lsh,"setshape"))+
       stepperHTML("Seats",lt.seats,lr[0],lr[1],"seats")+
-      (lsh==="long"?segHTML("Direction",[["0","Across"],["1","Up and down"]],lt.rot?"1":"0","setrot"):'')+
+      (lsh==="long"?segHTML("Direction",[["0","Across"],["1","Up and down"]],lt.rot?"1":"0","setrot")+
+        stepperHTML("Length",Math.round(tableLen(lt)),Math.ceil(minLen(lt)),RW()-4,"tlen")+
+        (typeof lt.len==="number"?'<div class="btnrow" style="margin:-6px 0 14px"><button class="btn ghost" data-act="tlenauto">Fit length to seats</button></div>':''):'')+
       '<div class="btnrow"><button class="btn olive" data-act="table" data-id="'+lt.id+'">Seat guests</button>'+
       (lHead?'':'<button class="btn danger" data-act="deltable">Remove table</button>')+'</div>';
   }
   else if(s.kind==="ldance"){
     var d=state.layout.dance;
     title="Dance floor";
-    body=stepperHTML("Width",Math.round(d.w),10,90,"dancew")+
+    body=stepperHTML("Width",Math.round(d.w),10,RW()-4,"dancew")+
       stepperHTML("Length",Math.round(d.h),8,state.layout.h,"danceh")+
       '<div class="btnrow"><button class="btn ghost" data-act="dancecenter">Center it side to side</button></div>';
   }
@@ -1133,7 +1166,7 @@ function renderSheet(){
     var mk=markById(s.id); if(!mk){ ui.sheet=null; host.innerHTML=""; return; }
     title="Label";
     body='<input class="field" id="mlabel" value="'+esc(mk.label)+'" placeholder="Bar, DJ, Cake…" style="margin-bottom:12px">'+
-      stepperHTML("Width",Math.round(mk.w),4,60,"markw")+
+      stepperHTML("Width",Math.round(mk.w),4,RW()-4,"markw")+
       stepperHTML("Length",Math.round(mk.h),3,60,"markh")+
       '<div class="btnrow"><button class="btn danger" data-act="delmark">Remove label</button></div>';
   }
@@ -1148,8 +1181,11 @@ function renderSheet(){
   else if(s.kind==="arrange"){
     var aL=state.layout, minH=Math.max(40,ceil5(maxBottom()-0.01));
     title="Arrange the room";
-    body=stepperHTML("Room length",aL.h,minH,240,"roomh")+
-      '<p class="hint">The room is always the same width. Make it longer or shorter to match the shape of the hall.</p>'+
+    var ext=xExtent(), minW=Math.max(60,ceil5(ext[1]-ext[0]-0.01));
+    body=stepperHTML("Room width",RW(),minW,300,"roomw")+
+      stepperHTML("Room length",aL.h,minH,300,"roomh")+
+      '<p class="hint">Widen or lengthen the room to make open floor for a bar, buffet, lounge, or anything else. Widening keeps everything centered, with new space added evenly on both sides.'+
+        (RW()<=minW||aL.h<=minH?' It can\'t get smaller than what\'s already in it, so move things in first, or pick a layout below to repack them.':'')+'</p>'+
       '<p class="sub">Start from a layout</p><div class="plist" style="max-height:none">'+
         '<button class="pitem" data-act="preset" data-v="sides">Two sides<small>Head table up top, tables down both sides of the dance floor</small></button>'+
         '<button class="pitem" data-act="preset" data-v="ring">Around the floor<small>Tables circle the dance floor, head table above</small></button>'+
@@ -1308,6 +1344,19 @@ document.addEventListener("click",function(e){
       updateTable(lt.id,function(x){ var y=resized(x,sn); y.shape=sto; return y; });
       clampObj("t",tableById(lt.id)); render(); break;
     }
+    case "tlen": {
+      var lt2=tableById(ui.sheet.id), cur2=tableLen(lt2);
+      var nl2=Math.max(minLen(lt2),Math.min(RW()-4,Math.round(cur2)+2*parseInt(el.dataset.d,10)));
+      if(Math.abs(nl2-cur2)<0.01) break;
+      pushUndo();
+      updateTable(lt2.id,function(x){ return Object.assign({},x,{len:nl2}); });
+      clampObj("t",tableById(lt2.id)); render(); break;
+    }
+    case "tlenauto": {
+      pushUndo();
+      updateTable(ui.sheet.id,function(x){ var y=Object.assign({},x); delete y.len; return y; });
+      clampObj("t",tableById(ui.sheet.id)); render(); break;
+    }
     case "setrot": {
       pushUndo();
       updateTable(ui.sheet.id,function(x){ return Object.assign({},x,{rot:el.dataset.v==="1"?1:0}); });
@@ -1323,16 +1372,16 @@ document.addEventListener("click",function(e){
     case "dancew": case "danceh": {
       var dd=state.layout.dance, step=2*parseInt(el.dataset.d,10);
       pushUndo();
-      if(a==="dancew") dd.w=Math.max(10,Math.min(90,Math.round(dd.w)+step));
+      if(a==="dancew") dd.w=Math.max(10,Math.min(RW()-4,Math.round(dd.w)+step));
       else dd.h=Math.max(8,Math.min(state.layout.h,Math.round(dd.h)+step));
       clampObj("x",dd); save(); render(); break;
     }
-    case "dancecenter": pushUndo(); state.layout.dance.x=50; save(); render(); break;
+    case "dancecenter": pushUndo(); state.layout.dance.x=RW()/2; save(); render(); break;
     case "markw": case "markh": {
       var mm=markById(ui.sheet.id), ms=2*parseInt(el.dataset.d,10);
       if(!mm) break;
       pushUndo();
-      if(a==="markw") mm.w=Math.max(4,Math.min(60,Math.round(mm.w)+ms));
+      if(a==="markw") mm.w=Math.max(4,Math.min(RW()-4,Math.round(mm.w)+ms));
       else mm.h=Math.max(3,Math.min(60,Math.round(mm.h)+ms));
       clampObj("x",mm); save(); render(); break;
     }
@@ -1341,9 +1390,21 @@ document.addEventListener("click",function(e){
       state.layout.marks=state.layout.marks.filter(function(x){return x.id!==ui.sheet.id;});
       ui.sheet=null; save(); render(); break;
     }
+    case "roomw": {
+      var WL=state.layout, ex=xExtent(), curW=RW();
+      var nw=Math.max(60,Math.min(300,curW+10*parseInt(el.dataset.d,10)));
+      if(nw<ex[1]-ex[0]) nw=Math.ceil(ex[1]-ex[0]);
+      if(nw===curW) break;
+      pushUndo();
+      /* keep the layout centered: shift everything by half the change, but never off either edge */
+      var shift=Math.max(-ex[0],Math.min(nw-ex[1],(nw-curW)/2));
+      allTables().forEach(function(t){ t.x+=shift; });
+      WL.dance.x+=shift; WL.marks.forEach(function(m){ m.x+=shift; });
+      WL.w=nw; clampAll(); save(); render(); break;
+    }
     case "roomh": {
       var RL=state.layout, mn=Math.max(40,ceil5(maxBottom()-0.01));
-      var nh=Math.max(mn,Math.min(240,RL.h+5*parseInt(el.dataset.d,10)));
+      var nh=Math.max(mn,Math.min(300,RL.h+5*parseInt(el.dataset.d,10)));
       if(nh===RL.h) break;
       pushUndo(); RL.h=nh; save(); render(); break;
     }
@@ -1557,8 +1618,9 @@ document.addEventListener("pointerdown",function(e){
   var obj=base==="t"?tableById(id):base==="dance"?state.layout.dance:markById(id);
   if(!obj) return;
   var dk=base==="t"?"t":"x", d=dimsOf(dk,obj);
-  drag={base:base,dk:dk,resize:resize,obj:obj,node:node,u:room.getBoundingClientRect().width/100,
-    sx:e.clientX,sy:e.clientY,ox:obj.x,oy:obj.y,ow:d.w,oh:d.h,moved:false,snap:JSON.stringify(state)};
+  drag={base:base,dk:dk,resize:resize,obj:obj,node:node,u:room.getBoundingClientRect().width/RW(),
+    sx:e.clientX,sy:e.clientY,ox:obj.x,oy:obj.y,ow:d.w,oh:d.h,moved:false,snap:JSON.stringify(state),
+    olen:base==="t"&&shapeOf(obj)==="long"?tableLen(obj):0};
   try{ el.setPointerCapture(e.pointerId); }catch(_){}
   e.preventDefault();
 });
@@ -1571,9 +1633,16 @@ document.addEventListener("pointermove",function(e){
   }
   var dx=px/drag.u, dy=py/drag.u, o=drag.obj, H=state.layout.h;
   function sn(v){ return Math.round(v*2)/2; }
-  if(drag.resize){
+  if(drag.resize&&drag.base==="t"){
+    /* stretch a long table along its length, keeping its starting end in place */
+    var along=o.rot?dy:dx, nl=Math.max(minLen(o),Math.min(RW()-4,sn(drag.olen+along)));
+    o.len=nl;
+    if(o.rot) o.y=drag.oy-drag.olen/2+tableLen(o)/2; else o.x=drag.ox-drag.olen/2+tableLen(o)/2;
+    clampObj("t",o);
+    refreshItem(drag.node,o);
+  } else if(drag.resize){
     var l=drag.ox-drag.ow/2, tp=drag.oy-drag.oh/2;
-    var w=Math.max(4,Math.min(100-l,sn(drag.ow+dx))), h=Math.max(3,Math.min(H-tp,sn(drag.oh+dy)));
+    var w=Math.max(4,Math.min(RW()-l,sn(drag.ow+dx))), h=Math.max(3,Math.min(H-tp,sn(drag.oh+dy)));
     o.w=w; o.h=h; o.x=l+w/2; o.y=tp+h/2;
     drag.node.style.width=r2(w)+"cqw"; drag.node.style.height=r2(h)+"cqw";
     var lb=drag.node.querySelector(".lbl"); if(lb) lb.className="lbl"+(h>w*1.3?" v":"");
@@ -1584,6 +1653,15 @@ document.addEventListener("pointermove",function(e){
     drag.node.style.left=r2(o.x-d.w/2)+"cqw"; drag.node.style.top=r2(o.y-d.h/2)+"cqw";
   }
 });
+/* redraw one table in place mid-drag, keeping the dot being dragged (it holds the pointer) */
+function refreshItem(node,t){
+  var tmp=document.createElement("div"); tmp.innerHTML=itemHTML(t,true,false);
+  var fresh=tmp.firstChild, keep=node.querySelector(".knob");
+  node.setAttribute("style",fresh.getAttribute("style"));
+  [].slice.call(node.childNodes).forEach(function(c){ if(c!==keep) node.removeChild(c); });
+  [].slice.call(fresh.childNodes).forEach(function(c){ if(!c.classList||!c.classList.contains("knob")) node.insertBefore(c,keep); });
+  if(keep){ var fk=fresh.querySelector(".knob"); if(fk) keep.setAttribute("style",fk.getAttribute("style")); }
+}
 function endDrag(e){
   if(!drag) return;
   var d=drag; drag=null;
