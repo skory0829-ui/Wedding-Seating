@@ -48,44 +48,62 @@ input,textarea{font-family:inherit}
 .tab.on{background:var(--cream);color:var(--navy)}
 
 /* hall */
-.hallwrap{padding:0 12px 12px}
-.hall{background:var(--cream);border-radius:0 0 14px 14px;padding:12px 10px 14px;
-  box-shadow:inset 0 0 0 1px rgba(22,40,63,.14)}
-.headtable{display:block;width:100%;text-align:left;background:var(--navy);border-radius:10px;
-  padding:9px 10px 11px;margin-bottom:12px;border:1px solid var(--navy-2)}
-.htlabel{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-.htname{font-family:"Fraunces",Georgia,serif;font-size:13px;color:var(--cream);font-weight:600}
-.htcount{font-size:11px;color:var(--terra-lt);letter-spacing:.08em}
-.htseats{display:flex;gap:5px;flex-wrap:wrap}
-.htseat{flex:1 1 auto;min-width:26px;height:30px;border-radius:5px;display:flex;align-items:center;
-  justify-content:center;font-size:9.5px;line-height:1.05;text-align:center;overflow:hidden;
-  padding:2px 3px;border:1px dashed rgba(243,236,221,.3);color:rgba(243,236,221,.4)}
-.htseat.on{background:var(--terra);border:1px solid var(--terra);color:#fff;font-weight:600}
+.hallwrap{padding:0 12px 12px;max-width:780px;margin:0 auto}
+.hall{background:var(--cream);border-radius:0 0 14px 14px;padding:10px 10px 14px;
+  box-shadow:inset 0 0 0 1px rgba(22,40,63,.14);container-type:inline-size}
 
-.floorrow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start}
-.side{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-@media(min-width:620px){.side{grid-template-columns:repeat(3,1fr)}}
-
-.chip{position:relative;width:clamp(46px,13.5vw,72px);aspect-ratio:1;display:block;padding:0}
-.disc{position:absolute;inset:17%;border-radius:50%;background:var(--cream-2);border:1.5px solid var(--navy);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform .12s ease}
-.chip.full .disc{background:var(--olive);border-color:var(--olive)}
-.chip.empty .disc{background:transparent;border-style:dashed;border-color:rgba(22,40,63,.4)}
-.chip:active .disc{transform:scale(.92)}
-.num{font-family:"Fraunces",Georgia,serif;font-size:clamp(12px,3.6vw,17px);font-weight:600;color:var(--navy);line-height:1}
-.chip.full .num{color:var(--cream-2)}
-.frac{font-size:8.5px;letter-spacing:.03em;color:rgba(22,40,63,.6);margin-top:1px}
-.chip.full .frac{color:rgba(251,246,236,.85)}
-.pip{position:absolute;width:15%;height:15%;transform:translate(-50%,-50%);border-radius:50%;
-  border:1.5px solid rgba(22,40,63,.45);background:var(--cream)}
+/* the room: everything is placed in cqw units, so 1 unit = 1% of the room's width */
+.room{position:relative;width:100%;border-radius:8px;background:var(--cream);
+  box-shadow:inset 0 0 0 1px rgba(22,40,63,.12)}
+.room.edit{background-color:var(--cream-2);
+  background-image:radial-gradient(rgba(22,40,63,.18) 1px,transparent 1.3px);background-size:5cqw 5cqw}
+.it{position:absolute;display:block;padding:0;margin:0}
+.body{position:absolute;display:flex;align-items:center;justify-content:center;gap:.8cqw;overflow:hidden;
+  background:var(--cream-2);border:1.5px solid var(--navy);color:var(--navy);transition:transform .12s ease}
+.body.col{flex-direction:column;gap:0}
+.it.round .body{border-radius:50%}
+.it.long .body{border-radius:.9cqw}
+.it.full .body{background:var(--olive);border-color:var(--olive);color:var(--cream-2)}
+.it.empty .body{background:transparent;border-style:dashed;border-color:rgba(22,40,63,.4)}
+.it.head .body{background:var(--navy);border:1.5px solid var(--navy);color:var(--cream)}
+.it:active .body{transform:scale(.94)}
+.room.edit .it:active .body{transform:none}
+.ln{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:max(10px,3.1cqw);line-height:1;white-space:nowrap}
+.lf{font-size:max(7.5px,1.9cqw);letter-spacing:.03em;opacity:.72;white-space:nowrap;line-height:1.15}
+.it.head .ln{font-size:max(9px,2.4cqw)}
+.it.head .lf{color:var(--terra-lt);opacity:1}
+.pip{position:absolute;width:2cqw;height:2cqw;min-width:6px;min-height:6px;transform:translate(-50%,-50%);
+  border-radius:50%;border:1.5px solid rgba(22,40,63,.45);background:var(--cream)}
 .pip.on{background:var(--terra);border-color:var(--terra)}
 
-.dance{align-self:stretch;min-height:170px;border-radius:8px;border:1.5px solid rgba(110,127,78,.45);
+.dancefl{position:absolute;border-radius:1.2cqw;border:1.5px solid rgba(110,127,78,.45);
   background:repeating-linear-gradient(45deg,rgba(110,127,78,.13) 0 7px,transparent 7px 14px),var(--cream-2);
-  display:flex;align-items:center;justify-content:center;padding:6px}
-.dance span{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--olive);
-  font-weight:700;writing-mode:vertical-rl;text-orientation:mixed}
-@media(min-width:620px){.dance span{writing-mode:horizontal-tb}}
+  display:flex;align-items:center;justify-content:center}
+.mark{position:absolute;border-radius:1cqw;border:1.5px dashed rgba(194,96,63,.55);background:rgba(194,96,63,.08);
+  display:flex;align-items:center;justify-content:center}
+.lbl{font-size:max(8px,2cqw);letter-spacing:.18em;text-transform:uppercase;color:var(--olive);font-weight:700;
+  text-align:center;line-height:1.2;padding:2px;overflow:hidden;max-width:100%;max-height:100%}
+.lbl.v{writing-mode:vertical-rl;text-orientation:mixed}
+.mark .lbl{color:var(--terra);letter-spacing:.1em}
+.room.edit .it,.room.edit .dancefl,.room.edit .mark{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.room.edit .it::after{content:"";position:absolute;inset:-.5cqw;border:1px dashed rgba(22,40,63,.35);
+  border-radius:1.4cqw;pointer-events:none}
+.room.edit .it.round::after{border-radius:50%}
+.room.edit .it.clash::after{border:2px solid var(--terra)}
+.room.edit .dancefl.clash,.room.edit .mark.clash{outline:2px solid var(--terra);outline-offset:2px}
+.dragging{z-index:6;opacity:.88;cursor:grabbing}
+.knob{position:absolute;right:-8px;bottom:-8px;width:16px;height:16px;border-radius:50%;background:var(--terra);
+  border:2px solid var(--cream-2);box-shadow:0 1px 4px rgba(0,0,0,.25);touch-action:none;z-index:2}
+.knob::before{content:"";position:absolute;inset:-10px}
+.tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.tools .sp{flex:1}
+.tbtn{padding:8px 11px;border-radius:8px;background:var(--navy);color:var(--cream);font-size:12px;font-weight:700;letter-spacing:.02em}
+.tbtn.terra{background:var(--terra);color:#fff}
+.tbtn.soft{background:rgba(22,40,63,.09);color:var(--navy)}
+.tbtn:disabled{opacity:.35}
+.ehint{font-size:11.5px;line-height:1.45;color:rgba(22,40,63,.68);margin:0 0 8px}
+.ehint b{color:var(--terra)}
+.sub{margin:14px 0 6px;text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:rgba(243,236,221,.55)}
 
 .legend{display:flex;gap:14px;justify-content:center;margin-top:12px;flex-wrap:wrap}
 .lg{display:flex;align-items:center;gap:5px;font-size:10.5px;color:rgba(22,40,63,.65)}
@@ -187,12 +205,17 @@ textarea.field{min-height:130px;resize:vertical;line-height:1.45;font-size:15px}
 
 <script>
 /* ---------------- constants + state ---------------- */
-var KEY="wedding-seating-v1", MIN_SEATS=6, MAX_SEATS=9, HEAD_MIN=2, HEAD_MAX=16;
-var ui={tab:"hall", query:"", filter:"all", raw:"", sheet:null, pickQuery:"", editingName:false};
-var state=null, saveTimer=null;
+var KEY="wedding-seating-v1", MIN_SEATS=6, MAX_SEATS=9, HEAD_MIN=2, HEAD_MAX=20, LONG_MIN=4, LONG_MAX=24;
+var ui={tab:"hall", query:"", filter:"all", raw:"", sheet:null, pickQuery:"", editingName:false, edit:false, undo:[]};
+var state=null, saveTimer=null, drag=null;
 
 function uid(p){return p+Math.random().toString(36).slice(2,9);}
-function makeTable(n){return {id:uid("t"),name:"Table "+n,seats:8,people:[null,null,null,null,null,null,null,null]};}
+function makeTable(n,shape){return {id:uid("t"),name:"Table "+n,seats:8,people:[null,null,null,null,null,null,null,null],shape:shape||"round",rot:0};}
+function nextTableNum(){
+  var mx=0;
+  state.tables.forEach(function(t){ var m=/(\d+)\s*$/.exec(t.name); if(m) mx=Math.max(mx,+m[1]); });
+  return Math.max(mx,state.tables.length)+1;
+}
 function defaultState(){
   var t=[]; for(var i=0;i<18;i++) t.push(makeTable(i+1));
   return {v:1, rev:0, head:{id:"head",name:"Head Table",seats:8,people:[null,null,null,null,null,null,null,null]}, tables:t, guests:[]};
@@ -299,13 +322,14 @@ function pushNow(){
   });
 }
 function pull(){
-  var a=adapter(); if(!a||sync.dirty||sync.busy||ui.sheet) return;
+  var a=adapter(); if(!a||sync.dirty||sync.busy||ui.sheet||drag) return;
   a.get().then(function(env){
     if(!env||!env.data) return;
     sync.remoteRev=Math.max(sync.remoteRev||0,env.rev||0);
     if(env.by===deviceId()||(env.rev||0)<=(state.rev||0)) return;
-    state=env.data; state.rev=env.rev;
-    saveLocal(); render(); setFlag("synced");
+    state=env.data; state.rev=env.rev; ui.undo=[];
+    if(ensureLayout()) save(); else saveLocal();
+    render(); setFlag("synced");
     toast("Updated from another phone");
   }).catch(function(e){ setFlag("offline"); console.warn(e); });
 }
@@ -368,7 +392,11 @@ function unpackTable(a,id){
 function encodePayload(withCfg){
   var sm=seatMap();
   var loose=state.guests.filter(function(g){return !sm[g.id];}).map(function(g){return g.name;});
-  var compact=[1, packTable(state.head), state.tables.map(packTable), loose];
+  var L=state.layout, r1=function(v){return Math.round((+v||0)*10)/10;};
+  var geo=allTables().map(function(t){ return [t.shape==="long"?1:0, r1(t.x), r1(t.y), t.rot?1:0]; });
+  var lay={h:L.h, dance:{x:r1(L.dance.x),y:r1(L.dance.y),w:r1(L.dance.w),h:r1(L.dance.h)},
+    marks:L.marks.map(function(m){return {id:m.id,label:m.label,x:r1(m.x),y:r1(m.y),w:r1(m.w),h:r1(m.h)};})};
+  var compact=[1, packTable(state.head), state.tables.map(packTable), loose, {g:geo, L:lay}];
   var obj = withCfg ? [2, sync.cfg||null, compact] : compact;
   var json=JSON.stringify(obj);
   return (withCfg?"s=":"c=")+encodeURIComponent(btoa(unescape(encodeURIComponent(json))));
@@ -389,7 +417,16 @@ function decodeCompact(p){
   var head=build(p[1],"head");
   var tables=p[2].map(function(r){ return build(r); });
   (p[3]||[]).forEach(gid);
-  return {v:1,rev:0,head:head,tables:tables,guests:guests};
+  var st={v:1,rev:0,head:head,tables:tables,guests:guests}, ex=p[4];
+  if(ex&&ex.g){
+    [head].concat(tables).forEach(function(t,i){
+      var g=ex.g[i]; if(!g) return;
+      if(t.id!=="head") t.shape=g[0]?"long":"round";
+      t.x=g[1]; t.y=g[2]; t.rot=g[3]?1:0;
+    });
+  }
+  if(ex&&ex.L&&ex.L.dance) st.layout=ex.L;
+  return st;
 }
 function readLink(){
   var h=location.hash.replace(/^#/,"");
@@ -453,6 +490,173 @@ function removeGuest(id){
   save();
 }
 
+function resized(t,n){ var p=t.people.slice(0,n); while(p.length<n) p.push(null); return Object.assign({},t,{seats:n,people:p}); }
+function markById(id){ var m=state.layout.marks; for(var i=0;i<m.length;i++) if(m[i].id===id) return m[i]; return null; }
+function pushUndo(){ ui.undo.push(JSON.stringify(state)); if(ui.undo.length>40) ui.undo.shift(); }
+
+/* ---------------- layout + geometry ----------------
+   The room is 100 units wide and layout.h units long. Every item stores its
+   center (x,y) in those units; the page draws them in cqw, so 1 unit = 1% of width. */
+var M=3;
+function shapeOf(t){ return t.id==="head"?"long":(t.shape==="long"?"long":"round"); }
+function seatRange(t){
+  if(t.id==="head") return [HEAD_MIN,HEAD_MAX];
+  return shapeOf(t)==="long"?[LONG_MIN,LONG_MAX]:[MIN_SEATS,MAX_SEATS];
+}
+function geom(t){
+  var n=t.seats, pips=[], i;
+  if(shapeOf(t)==="round"){
+    for(i=0;i<n;i++){ var a=(i/n)*Math.PI*2-Math.PI/2; pips.push({x:6+Math.cos(a)*5,y:6+Math.sin(a)*5}); }
+    return {w:12,h:12,body:{x:2,y:2,w:8,h:8},pips:pips,col:true};
+  }
+  /* long table: seats split across both long sides; the head table seats one side, facing the room */
+  var one=t.id==="head", top=one?n:Math.ceil(n/2), bot=n-top;
+  var len=Math.max(top,2)*4+1.5, dep=one?4.2:5, m=2.6;
+  var w=len+1, h=one?(m+dep+.6):(m*2+dep);
+  var body={x:.5,y:m,w:len,h:dep};
+  for(i=0;i<top;i++) pips.push({x:.5+len*(i+.5)/top,y:m/2});
+  for(i=0;i<bot;i++) pips.push({x:.5+len*(i+.5)/bot,y:m+dep+m/2});
+  if(t.rot) return {w:h,h:w,body:{x:body.y,y:body.x,w:body.h,h:body.w},
+    pips:pips.map(function(p){return {x:p.y,y:p.x};}),col:true};
+  return {w:w,h:h,body:body,pips:pips,col:false};
+}
+function dimsOf(kind,o){ if(kind==="t"){ var g=geom(o); return {w:g.w,h:g.h}; } return {w:o.w,h:o.h}; }
+function rectOf(id,x,y,d){ return {id:id,x0:x-d.w/2,y0:y-d.h/2,x1:x+d.w/2,y1:y+d.h/2}; }
+function rectsAll(skip){
+  var out=[], L=state.layout;
+  allTables().forEach(function(t){
+    if(t===skip||typeof t.x!=="number") return;
+    out.push(rectOf(t.id,t.x,t.y,dimsOf("t",t)));
+  });
+  if(L.dance!==skip) out.push(rectOf("dance",L.dance.x,L.dance.y,L.dance));
+  L.marks.forEach(function(m){ if(m!==skip&&typeof m.x==="number") out.push(rectOf(m.id,m.x,m.y,m)); });
+  return out;
+}
+function hits(a,b,pad){ return a.x0<b.x1+pad && b.x0<a.x1+pad && a.y0<b.y1+pad && b.y0<a.y1+pad; }
+function clashes(){
+  var r=rectsAll(null), c={};
+  for(var i=0;i<r.length;i++) for(var j=i+1;j<r.length;j++)
+    if(hits(r[i],r[j],-0.4)){ c[r[i].id]=1; c[r[j].id]=1; }
+  return c;
+}
+function ceil5(v){ return Math.ceil(v/5)*5; }
+function clampObj(kind,o){
+  var d=dimsOf(kind,o), H=state.layout.h;
+  o.x=Math.min(Math.max(o.x,d.w/2),Math.max(d.w/2,100-d.w/2));
+  o.y=Math.min(Math.max(o.y,d.h/2),Math.max(d.h/2,H-d.h/2));
+}
+function clampAll(){
+  allTables().forEach(function(t){ clampObj("t",t); });
+  clampObj("x",state.layout.dance);
+  state.layout.marks.forEach(function(m){ clampObj("x",m); });
+}
+function maxBottom(){ return rectsAll(null).reduce(function(s,r){ return Math.max(s,r.y1); },0); }
+/* drop an item into the first open spot, scanning top-left to bottom-right; grow the room if it is full */
+function placeFree(o,kind){
+  kind=kind||"t";
+  var L=state.layout, d=dimsOf(kind,o), others=rectsAll(o), x, y;
+  for(y=d.h/2+1; y<=L.h-d.h/2-1; y+=1){
+    for(x=d.w/2+1; x<=100-d.w/2-1; x+=1){
+      var r=rectOf("",x,y,d), ok=true;
+      for(var i=0;i<others.length;i++) if(hits(r,others[i],1.2)){ ok=false; break; }
+      if(ok){ o.x=x; o.y=y; return; }
+    }
+  }
+  o.x=50; o.y=L.h+d.h/2+2; L.h=ceil5(L.h+d.h+4);
+}
+
+/* ---- preset layouts ---- */
+function fp(t){ return dimsOf("t",t); }
+function flow(list,x0,x1,y0,gap){
+  var rows=[], cur=[], cw=0;
+  list.forEach(function(t){
+    var d=fp(t);
+    if(cur.length && cw+gap+d.w > x1-x0){ rows.push(cur); cur=[]; cw=0; }
+    cw+=(cur.length?gap:0)+d.w; cur.push(t);
+  });
+  if(cur.length) rows.push(cur);
+  var y=y0;
+  rows.forEach(function(r){
+    var rw=0, rh=0;
+    r.forEach(function(t,i){ var d=fp(t); rw+=d.w+(i?gap:0); rh=Math.max(rh,d.h); });
+    var x=x0+Math.max(0,(x1-x0)-rw)/2;
+    r.forEach(function(t){ var d=fp(t); t.x=x+d.w/2; t.y=y+rh/2; x+=d.w+gap; });
+    y+=rh+gap;
+  });
+  return rows.length? y-gap : y0;
+}
+function placeHead(){ var h=state.head; h.rot=0; var hd=fp(h); h.x=50; h.y=M+hd.h/2; return M+hd.h; }
+function presetSides(){
+  var L=state.layout, y0=placeHead()+5;
+  var dw=Math.min(40,Math.max(16,L.dance.w||30)), sideW=(100-dw)/2-2*M;
+  var ts=state.tables, half=Math.ceil(ts.length/2);
+  var b=Math.max(flow(ts.slice(0,half),M,M+sideW,y0,2), flow(ts.slice(half),100-M-sideW,100-M,y0,2), y0+30);
+  L.dance={x:50,y:(y0+b)/2,w:dw,h:b-y0};
+  L.h=Math.max(50,ceil5(b+M+1));
+}
+function presetRows(){
+  var L=state.layout, dy=placeHead()+3;
+  var dw=Math.min(70,Math.max(24,L.dance.w||40)), dh=Math.min(30,Math.max(14,L.dance.h||20));
+  L.dance={x:50,y:dy+dh/2,w:dw,h:dh};
+  var b=flow(state.tables,M,100-M,dy+dh+5,3);
+  L.h=Math.max(50,ceil5(b+M+1));
+}
+function presetRing(){
+  var L=state.layout, ts=state.tables, top=placeHead(), m=0, need=0;
+  ts.forEach(function(t){ var d=fp(t), s=Math.max(d.w,d.h); m=Math.max(m,s); need+=s+2.5; });
+  var r0=need/(2*Math.PI), lim=50-m/2-M, rx, ry;
+  if(r0<=lim){ rx=ry=Math.min(lim,Math.max(r0,22)); }
+  else { rx=lim; ry=Math.sqrt(Math.max(2*r0*r0-rx*rx,rx*rx)); }
+  /* walk the oval and drop each table at an even distance along it (sized by its footprint),
+     so a tall oval doesn't crowd its ends; stretch the oval until nothing touches */
+  var sizes=ts.map(function(t){ var d=fp(t); return Math.max(d.w,d.h)+2.5; });
+  var tot=sizes.reduce(function(s,v){return s+v;},0)||1, N=720, cy, tries=0;
+  function lay(){
+    var pts=[], cum=[0], i, at=0, k=0;
+    for(i=0;i<=N;i++){ var a=-Math.PI/2+i/N*Math.PI*2; pts.push([Math.cos(a)*rx,Math.sin(a)*ry]); }
+    for(i=1;i<=N;i++) cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));
+    if(cum[N]<tot) return false;
+    cy=top+4+ry+m/2;
+    ts.forEach(function(t,j){
+      var target=(at+sizes[j]/2)/tot*cum[N]; at+=sizes[j];
+      while(k<N&&cum[k+1]<target) k++;
+      t.x=50+pts[k][0]; t.y=cy+pts[k][1];
+    });
+    var r=ts.map(function(t){ return rectOf(t.id,t.x,t.y,fp(t)); });
+    for(i=0;i<r.length;i++) for(var j=i+1;j<r.length;j++) if(hits(r[i],r[j],0.5)) return false;
+    return true;
+  }
+  while(!lay() && ++tries<30) ry*=1.06;
+  /* biggest dance floor that fits inside the ring without touching a table */
+  var tr=ts.map(function(t){ return rectOf(t.id,t.x,t.y,fp(t)); }), dw=2*rx, dh=2*ry, g=0;
+  function free(){ var d=rectOf("d",50,cy,{w:dw,h:dh}); return !tr.some(function(r){ return hits(d,r,1.5); }); }
+  while(!free() && ++g<200){ dw*=.97; dh*=.97; }
+  L.dance={x:50,y:cy,w:Math.max(12,dw),h:Math.max(10,dh)};
+  L.h=Math.max(50,ceil5(cy+ry+m/2+M+1));
+}
+function finishPreset(){
+  state.layout.marks.forEach(function(mk){
+    clampObj("x",mk);
+    var me=rectOf(mk.id,mk.x,mk.y,mk);
+    if(rectsAll(mk).some(function(r){ return hits(me,r,0); })) placeFree(mk,"x");
+  });
+  clampAll();
+}
+/* older charts (and tables added from an older copy of the app) have no positions yet */
+function ensureLayout(){
+  var L=state.layout, changed=false;
+  if(!L||!L.dance){
+    state.layout={h:100,dance:{x:50,y:50,w:30,h:40},marks:[]};
+    presetSides(); return true;
+  }
+  if(!L.marks){ L.marks=[]; changed=true; }
+  if(typeof L.h!=="number"){ L.h=100; changed=true; }
+  allTables().forEach(function(t){
+    if(typeof t.x!=="number"||typeof t.y!=="number"){ delete t.x; delete t.y; placeFree(t); changed=true; }
+  });
+  return changed;
+}
+
 /* ---------------- name parsing ---------------- */
 function parseNames(raw){
   var lines=raw.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean)
@@ -488,41 +692,53 @@ function renderTabs(){
     b.classList.toggle("on", b.dataset.tab===ui.tab);
   });
 }
-function chipHTML(t){
-  var taken=t.people.filter(Boolean).length;
-  var cls="chip"+(taken===t.seats?" full":"")+(taken===0?" empty":"");
-  var pips="";
-  for(var i=0;i<t.seats;i++){
-    var a=(i/t.seats)*Math.PI*2-Math.PI/2;
-    pips+='<span class="pip'+(t.people[i]?" on":"")+'" style="left:'+(50+Math.cos(a)*42)+'%;top:'+(50+Math.sin(a)*42)+'%"></span>';
-  }
-  var label=t.name.replace(/^table\s*/i,"")||"•";
-  return '<button class="'+cls+'" data-act="table" data-id="'+t.id+'" aria-label="'+esc(t.name)+'">'+pips+
-    '<span class="disc"><span class="num">'+esc(label)+'</span><span class="frac">'+taken+'/'+t.seats+'</span></span></button>';
+function r2(v){ return Math.round(v*100)/100; }
+function boxStyle(x,y,w,h){ return 'left:'+r2(x-w/2)+'cqw;top:'+r2(y-h/2)+'cqw;width:'+r2(w)+'cqw;height:'+r2(h)+'cqw'; }
+function itemHTML(t,ed,clash){
+  var g=geom(t), taken=t.people.filter(Boolean).length, isHead=t.id==="head";
+  var cls="it "+(isHead?"head long":shapeOf(t))+
+    (!isHead&&taken===t.seats?" full":"")+(!isHead&&taken===0?" empty":"")+(clash?" clash":"");
+  var pips=g.pips.map(function(p,i){
+    return '<span class="pip'+(t.people[i]?" on":"")+'" style="left:'+r2(p.x)+'cqw;top:'+r2(p.y)+'cqw"></span>';
+  }).join("");
+  var b=g.body;
+  var label=isHead?(t.rot?"Head":t.name):(t.name.replace(/^table\s*/i,"")||"•");
+  return '<button class="'+cls+'" '+(ed?'data-drag="t"':'data-act="table"')+' data-id="'+t.id+'" aria-label="'+esc(t.name)+'" style="'+boxStyle(t.x,t.y,g.w,g.h)+'">'+pips+
+    '<span class="body'+(g.col?" col":"")+'" style="left:'+r2(b.x)+'cqw;top:'+r2(b.y)+'cqw;width:'+r2(b.w)+'cqw;height:'+r2(b.h)+'cqw">'+
+    '<span class="ln">'+esc(label)+'</span><span class="lf">'+taken+'/'+t.seats+'</span></span></button>';
+}
+function danceHTML(d,ed,clash){
+  return '<div class="dancefl'+(clash?" clash":"")+'"'+(ed?' data-drag="dance"':'')+' style="'+boxStyle(d.x,d.y,d.w,d.h)+'">'+
+    '<span class="lbl'+(d.h>d.w*1.3?" v":"")+'">Dance Floor</span>'+(ed?'<span class="knob" data-drag="dance-size"></span>':'')+'</div>';
+}
+function markHTML(m,ed,clash){
+  return '<div class="mark'+(clash?" clash":"")+'"'+(ed?' data-drag="mark"':'')+' data-id="'+m.id+'" style="'+boxStyle(m.x,m.y,m.w,m.h)+'">'+
+    '<span class="lbl'+(m.h>m.w*1.3?" v":"")+'">'+esc(m.label)+'</span>'+(ed?'<span class="knob" data-drag="mark-size"></span>':'')+'</div>';
 }
 function hallHTML(){
-  var h=state.head, taken=h.people.filter(Boolean).length;
-  var hs="";
-  for(var i=0;i<h.seats;i++){
-    var n=h.people[i]?(guestName(h.people[i])||"").split(" ")[0]:(i+1);
-    hs+='<span class="htseat'+(h.people[i]?" on":"")+'">'+esc(n)+'</span>';
-  }
-  var half=Math.ceil(state.tables.length/2);
-  var left=state.tables.slice(0,half).map(chipHTML).join("");
-  var right=state.tables.slice(half).map(chipHTML).join("");
-  return '<div class="hallwrap"><div class="hall">'+
-    '<button class="headtable" data-act="table" data-id="head">'+
-      '<span class="htlabel"><span class="htname">'+esc(h.name)+'</span>'+
-      '<span class="htcount">'+taken+'/'+h.seats+'</span></span>'+
-      '<span class="htseats">'+hs+'</span></button>'+
-    '<div class="floorrow"><div class="side">'+left+'</div>'+
-      '<div class="dance"><span>Dance Floor</span></div>'+
-      '<div class="side">'+right+'</div></div>'+
-    '<div class="legend">'+
+  var L=state.layout, ed=ui.edit, c=ed?clashes():{}, nc=Object.keys(c).length;
+  var inner=danceHTML(L.dance,ed,c.dance)+
+    L.marks.map(function(m){ return markHTML(m,ed,c[m.id]); }).join("")+
+    allTables().map(function(t){ return itemHTML(t,ed,c[t.id]); }).join("");
+  var tools = ed
+    ? '<div class="tools">'+
+        '<button class="tbtn" data-act="addround">+ Round</button>'+
+        '<button class="tbtn" data-act="addlong">+ Long</button>'+
+        '<button class="tbtn" data-act="addmarkmenu">+ Label</button>'+
+        '<button class="tbtn" data-act="arrange">Arrange</button>'+
+        '<span class="sp"></span>'+
+        '<button class="tbtn soft" data-act="undo"'+(ui.undo.length?'':' disabled')+'>Undo</button>'+
+        '<button class="tbtn terra" data-act="doneedit">Done</button></div>'+
+      '<p class="ehint">Drag anything to move it. Tap it to change shape, seats, or size. Drag an orange dot to resize.'+
+        (nc?' <b>'+nc+' things overlap</b> and are outlined in orange.':'')+'</p>'
+    : '<div class="tools"><span class="sp"></span><button class="tbtn soft" data-act="editlayout">Edit layout</button></div>';
+  return '<div class="hallwrap"><div class="hall">'+tools+
+    '<div class="room'+(ed?' edit':'')+'" id="room" style="height:'+r2(L.h)+'cqw">'+inner+'</div>'+
+    (ed?'</div></div>':'<div class="legend">'+
       '<span class="lg"><span class="lgdot" style="background:transparent;border-style:dashed"></span>Empty</span>'+
       '<span class="lg"><span class="lgdot" style="background:#C2603F;border-color:#C2603F"></span>Filled seat</span>'+
       '<span class="lg"><span class="lgdot" style="background:#6E7F4E;border-color:#6E7F4E"></span>Table full</span>'+
-    '</div></div></div>';
+    '</div></div></div>');
 }
 function guestListHTML(){
   var sm=seatMap(), q=ui.query.trim().toLowerCase();
@@ -561,8 +777,8 @@ function setupHTML(){
       '<div class="btnrow"><button class="btn primary" data-act="addbulk">Add guests</button></div></div>'+
 
     '<div class="card"><h3>Tables in the room</h3>'+
-      '<p class="hint">Round tables split evenly left and right of the dance floor. The head table sits up top.</p>'+
-      stepperHTML("Round tables", state.tables.length, 2, 40, "tablecount")+
+      '<p class="hint">New tables drop into an open spot in the room. To move things, change table shapes, or add long tables, tap <b>Edit layout</b> on the Hall tab.</p>'+
+      stepperHTML("Tables", state.tables.length, 1, 60, "tablecount")+
       '<div class="btnrow"><button class="btn ghost" data-act="alleight">Set every table to 8</button></div></div>'+
 
     syncCardHTML()+
@@ -645,6 +861,12 @@ function stepperHTML(label,val,min,max,act){
     '<span class="val">'+val+'</span>'+
     '<button class="rnd" data-act="'+act+'" data-d="1"'+(val>=max?" disabled":"")+'>+</button></span></div>';
 }
+function segHTML(label,opts,cur,act){
+  return '<p class="hint" style="margin:0 0 6px">'+esc(label)+'</p><div class="filters" style="margin:0 0 12px">'+
+    opts.map(function(o){
+      return '<button class="fbtn'+(o[0]===cur?' on':'')+'" data-act="'+act+'" data-v="'+o[0]+'">'+esc(o[1])+'</button>';
+    }).join("")+'</div>';
+}
 function render(){
   renderTabs(); renderCounts();
   document.getElementById("view").innerHTML =
@@ -659,12 +881,12 @@ function renderSheet(){
   var s=ui.sheet, body="", title="", right="";
   if(s.kind==="table"){
     var t=tableById(s.id); if(!t){ ui.sheet=null; host.innerHTML=""; return; }
-    var isHead=t.id==="head";
+    var rng=seatRange(t);
     title = ui.editingName
       ? '<input class="field" id="tname" value="'+esc(t.name)+'">'
       : esc(t.name);
     if(!ui.editingName) right='<button class="clr" data-act="rename">Rename</button>';
-    body = stepperHTML("Seats", t.seats, isHead?HEAD_MIN:MIN_SEATS, isHead?HEAD_MAX:MAX_SEATS, "seats")+
+    body = stepperHTML("Seats", t.seats, rng[0], rng[1], "seats")+
       '<div class="seatlist">'+t.people.map(function(p,i){
         var nm=p?(guestName(p)||"(removed guest)"):'<span class="placeholder">Tap to add a name</span>';
         return '<div class="seat'+(p?" taken":"")+'"><span class="seatno">'+(i+1)+'</span>'+
@@ -689,6 +911,54 @@ function renderSheet(){
     body='<input class="field" id="psearch" placeholder="Search guests, or type a new name" value="'+esc(ui.pickQuery)+'">'+
       '<div class="plist" style="margin-top:10px">'+items+'</div>';
   }
+  else if(s.kind==="ltable"){
+    var lt=tableById(s.id); if(!lt){ ui.sheet=null; host.innerHTML=""; return; }
+    var lHead=lt.id==="head", lr=seatRange(lt), lsh=shapeOf(lt);
+    title = ui.editingName ? '<input class="field" id="tname" value="'+esc(lt.name)+'">' : esc(lt.name);
+    if(!ui.editingName) right='<button class="clr" data-act="rename">Rename</button>';
+    body=(lHead?'':segHTML("Shape",[["round","Round"],["long","Long"]],lsh,"setshape"))+
+      stepperHTML("Seats",lt.seats,lr[0],lr[1],"seats")+
+      (lsh==="long"?segHTML("Direction",[["0","Across"],["1","Up and down"]],lt.rot?"1":"0","setrot"):'')+
+      '<div class="btnrow"><button class="btn olive" data-act="table" data-id="'+lt.id+'">Seat guests</button>'+
+      (lHead?'':'<button class="btn danger" data-act="deltable">Remove table</button>')+'</div>';
+  }
+  else if(s.kind==="ldance"){
+    var d=state.layout.dance;
+    title="Dance floor";
+    body=stepperHTML("Width",Math.round(d.w),10,90,"dancew")+
+      stepperHTML("Length",Math.round(d.h),8,state.layout.h,"danceh")+
+      '<div class="btnrow"><button class="btn ghost" data-act="dancecenter">Center it side to side</button></div>';
+  }
+  else if(s.kind==="lmark"){
+    var mk=markById(s.id); if(!mk){ ui.sheet=null; host.innerHTML=""; return; }
+    title="Label";
+    body='<input class="field" id="mlabel" value="'+esc(mk.label)+'" placeholder="Bar, DJ, Cake…" style="margin-bottom:12px">'+
+      stepperHTML("Width",Math.round(mk.w),4,60,"markw")+
+      stepperHTML("Length",Math.round(mk.h),3,60,"markh")+
+      '<div class="btnrow"><button class="btn danger" data-act="delmark">Remove label</button></div>';
+  }
+  else if(s.kind==="addmark"){
+    title="Add a label";
+    body='<p class="hint">Mark the other things in the room so the seating makes sense around them.</p><div class="plist" style="max-height:none">'+
+      ["Bar","DJ","Cake","Gifts","Entrance","Photo booth","Guest book","Buffet"].map(function(n){
+        return '<button class="pitem" data-act="newmark" data-v="'+esc(n)+'">'+esc(n)+'</button>';
+      }).join("")+
+      '<button class="pitem" style="border-color:#C2603F" data-act="newmark" data-v="">Something else…</button></div>';
+  }
+  else if(s.kind==="arrange"){
+    var aL=state.layout, minH=Math.max(40,ceil5(maxBottom()-0.01));
+    title="Arrange the room";
+    body=stepperHTML("Room length",aL.h,minH,240,"roomh")+
+      '<p class="hint">The room is always the same width. Make it longer or shorter to match the shape of the hall.</p>'+
+      '<p class="sub">Start from a layout</p><div class="plist" style="max-height:none">'+
+        '<button class="pitem" data-act="preset" data-v="sides">Two sides<small>Head table up top, tables down both sides of the dance floor</small></button>'+
+        '<button class="pitem" data-act="preset" data-v="ring">Around the floor<small>Tables circle the dance floor, head table above</small></button>'+
+        '<button class="pitem" data-act="preset" data-v="rows">Rows<small>Dance floor up front, tables in rows behind it</small></button>'+
+      '</div>'+
+      '<p class="sub">Every table at once</p><div class="btnrow">'+
+        '<button class="btn ghost" data-act="allshape" data-v="round">Make all round</button>'+
+        '<button class="btn ghost" data-act="allshape" data-v="long">Make all long</button></div>';
+  }
   else if(s.kind==="assign"){
     title="Seat "+esc(guestName(s.guestId)||"");
     body='<div class="plist">'+allTables().map(function(t){
@@ -700,7 +970,7 @@ function renderSheet(){
   host.innerHTML='<div class="scrim" data-act="scrim"><div class="sheet" id="sheet">'+
     '<div class="grab"></div><div class="sheethdr"><span class="sname">'+title+'</span>'+right+
     '<button class="x" data-act="closesheet">✕</button></div>'+body+'</div>';
-  var f=document.getElementById("psearch")||document.getElementById("tname");
+  var f=document.getElementById("psearch")||document.getElementById("tname")||document.getElementById("mlabel");
   if(f && ui.focusField){ f.focus(); if(f.setSelectionRange) f.setSelectionRange(f.value.length,f.value.length); }
   ui.focusField=false;
 }
@@ -729,14 +999,111 @@ document.addEventListener("click",function(e){
       break;
     case "rename": ui.editingName=true; ui.focusField=true; renderSheet(); break;
     case "seats": {
-      var t=tableById(ui.sheet.id), isHead=t.id==="head";
-      var n=t.seats+parseInt(el.dataset.d,10);
-      n=Math.max(isHead?HEAD_MIN:MIN_SEATS,Math.min(isHead?HEAD_MAX:MAX_SEATS,n));
+      var t=tableById(ui.sheet.id), rg=seatRange(t);
+      var n=Math.max(rg[0],Math.min(rg[1],t.seats+parseInt(el.dataset.d,10)));
+      if(n===t.seats) break;
       var dropped=t.people.slice(n).filter(Boolean).map(function(p){return guestName(p)||"someone";});
       if(dropped.length && !confirm("Removing that seat unseats "+dropped.join(" and ")+". Continue?")) break;
+      if(ui.edit) pushUndo();
       setSeatCount(t.id,n);
+      var st=tableById(t.id); if(typeof st.x==="number") clampObj("t",st);
       if(dropped.length) toast(dropped.join(" and ")+" moved back to the guest list");
-      renderSheet(); renderCounts(); break;
+      render(); break;
+    }
+
+    /* ---- layout editing ---- */
+    case "editlayout": ui.edit=true; ui.undo=[]; render(); break;
+    case "doneedit": ui.edit=false; ui.undo=[]; render(); toast("Layout saved"); break;
+    case "undo": {
+      if(!ui.undo.length) break;
+      var rv=state.rev; state=JSON.parse(ui.undo.pop()); state.rev=rv;
+      ui.sheet=null; save(); render(); break;
+    }
+    case "addround": case "addlong": {
+      pushUndo();
+      var nt=makeTable(nextTableNum(), a==="addlong"?"long":"round");
+      placeFree(nt); state.tables.push(nt);
+      save(); render(); toast(nt.name+" added"); break;
+    }
+    case "addmarkmenu": openSheet({kind:"addmark"}); break;
+    case "newmark": {
+      pushUndo();
+      var lab=el.dataset.v, ent=lab==="Entrance";
+      var mk={id:uid("m"),label:lab||"Label",w:ent?16:12,h:ent?4:8,x:0,y:0};
+      placeFree(mk,"x"); state.layout.marks.push(mk); save();
+      if(lab){ ui.sheet=null; toast(lab+" added"); }
+      else { ui.sheet={kind:"lmark",id:mk.id}; ui.focusField=true; }
+      render(); break;
+    }
+    case "arrange": openSheet({kind:"arrange"}); break;
+    case "preset": {
+      if(!confirm("Rearrange every table into this layout? You can undo it.")) break;
+      pushUndo();
+      ({sides:presetSides,ring:presetRing,rows:presetRows})[el.dataset.v]();
+      finishPreset(); ui.sheet=null; save(); render(); toast("Layout applied"); break;
+    }
+    case "allshape": {
+      var to=el.dataset.v, lost=0;
+      if(to==="round") state.tables.forEach(function(x){ lost+=x.people.slice(MAX_SEATS).filter(Boolean).length; });
+      if(lost && !confirm("Round tables top out at "+MAX_SEATS+" seats, so "+lost+" guest"+(lost>1?"s go":" goes")+" back to the unseated list. Continue?")) break;
+      pushUndo();
+      state.tables=state.tables.map(function(x){
+        var rr=to==="round"?[MIN_SEATS,MAX_SEATS]:[LONG_MIN,LONG_MAX];
+        var y=resized(x,Math.max(rr[0],Math.min(rr[1],x.seats)));
+        y.shape=to; return y;
+      });
+      clampAll(); save(); render();
+      toast("All tables are "+to+" now. Pick a layout to space them out."); break;
+    }
+    case "setshape": {
+      var lt=tableById(ui.sheet.id), sto=el.dataset.v;
+      if(shapeOf(lt)===sto) break;
+      var sr=sto==="round"?[MIN_SEATS,MAX_SEATS]:[LONG_MIN,LONG_MAX];
+      var sn=Math.max(sr[0],Math.min(sr[1],lt.seats));
+      var sd=lt.people.slice(sn).filter(Boolean).map(function(p){return guestName(p)||"someone";});
+      if(sd.length && !confirm("Round tables seat up to "+MAX_SEATS+", so "+sd.join(" and ")+" would be unseated. Continue?")) break;
+      pushUndo();
+      updateTable(lt.id,function(x){ var y=resized(x,sn); y.shape=sto; return y; });
+      clampObj("t",tableById(lt.id)); render(); break;
+    }
+    case "setrot": {
+      pushUndo();
+      updateTable(ui.sheet.id,function(x){ return Object.assign({},x,{rot:el.dataset.v==="1"?1:0}); });
+      clampObj("t",tableById(ui.sheet.id)); render(); break;
+    }
+    case "deltable": {
+      var dt=tableById(ui.sheet.id), sc=dt.people.filter(Boolean).length;
+      if(!confirm("Remove "+dt.name+"?"+(sc?" The "+sc+" guest"+(sc>1?"s":"")+" seated there go back to the unseated list.":""))) break;
+      pushUndo();
+      state.tables=state.tables.filter(function(x){return x.id!==dt.id;});
+      ui.sheet=null; save(); render(); toast(dt.name+" removed"); break;
+    }
+    case "dancew": case "danceh": {
+      var dd=state.layout.dance, step=2*parseInt(el.dataset.d,10);
+      pushUndo();
+      if(a==="dancew") dd.w=Math.max(10,Math.min(90,Math.round(dd.w)+step));
+      else dd.h=Math.max(8,Math.min(state.layout.h,Math.round(dd.h)+step));
+      clampObj("x",dd); save(); render(); break;
+    }
+    case "dancecenter": pushUndo(); state.layout.dance.x=50; save(); render(); break;
+    case "markw": case "markh": {
+      var mm=markById(ui.sheet.id), ms=2*parseInt(el.dataset.d,10);
+      if(!mm) break;
+      pushUndo();
+      if(a==="markw") mm.w=Math.max(4,Math.min(60,Math.round(mm.w)+ms));
+      else mm.h=Math.max(3,Math.min(60,Math.round(mm.h)+ms));
+      clampObj("x",mm); save(); render(); break;
+    }
+    case "delmark": {
+      pushUndo();
+      state.layout.marks=state.layout.marks.filter(function(x){return x.id!==ui.sheet.id;});
+      ui.sheet=null; save(); render(); break;
+    }
+    case "roomh": {
+      var RL=state.layout, mn=Math.max(40,ceil5(maxBottom()-0.01));
+      var nh=Math.max(mn,Math.min(240,RL.h+5*parseInt(el.dataset.d,10)));
+      if(nh===RL.h) break;
+      pushUndo(); RL.h=nh; save(); render(); break;
     }
     case "seat": ui.sheet={kind:"seat",tableId:ui.sheet.id,idx:i}; ui.pickQuery=""; renderSheet(); break;
     case "clearseat": clearSeat(ui.sheet.id,i); renderSheet(); renderCounts(); break;
@@ -765,9 +1132,14 @@ document.addEventListener("click",function(e){
       var added=addGuests(names); ui.raw=""; render(); toast("Added "+added+" guests"); break;
     }
     case "tablecount": {
-      var d=parseInt(el.dataset.d,10), cur=state.tables.length, want=Math.max(2,Math.min(40,cur+d));
-      if(want>cur){ for(var k=cur;k<want;k++) state.tables.push(makeTable(k+1)); }
-      else { state.tables=state.tables.slice(0,want); }
+      var d=parseInt(el.dataset.d,10), cur=state.tables.length, want=Math.max(1,Math.min(60,cur+d));
+      if(want>cur){
+        for(var k=cur;k<want;k++){ var nt2=makeTable(nextTableNum()); placeFree(nt2); state.tables.push(nt2); }
+      } else {
+        var gone=state.tables.slice(want), gs=gone.reduce(function(s,x){return s+x.people.filter(Boolean).length;},0);
+        if(gs && !confirm("Removing "+gone.map(function(x){return x.name;}).join(", ")+" unseats "+gs+" guest"+(gs>1?"s":"")+". Continue?")) break;
+        state.tables=state.tables.slice(0,want);
+      }
       save(); render(); break;
     }
     case "alleight": {
@@ -793,7 +1165,7 @@ document.addEventListener("click",function(e){
         if(env&&env.data){
           sync.remoteRev=env.rev||0;
           if(confirm("There is already a chart on the backend. Use it and replace what is on this phone?")){
-            state=env.data; state.rev=env.rev||0; saveLocal();
+            state=env.data; state.rev=env.rev||0; ensureLayout(); saveLocal();
           } else {
             sync.dirty=true; return pushNow();
           }
@@ -869,6 +1241,13 @@ document.addEventListener("input",function(e){
   else if(t.id==="psearch"){
     ui.pickQuery=t.value; ui.focusField=true; renderSheet();
   }
+  else if(t.id==="mlabel" && ui.sheet && ui.sheet.kind==="lmark"){
+    var mk=markById(ui.sheet.id);
+    if(mk){
+      mk.label=t.value; save();
+      var lb=document.querySelector('.mark[data-id="'+mk.id+'"] .lbl'); if(lb) lb.textContent=t.value;
+    }
+  }
   else if(t.id==="bulk"){
     ui.raw=t.value;
     var p=ui.raw.trim()?parseNames(ui.raw):[];
@@ -884,19 +1263,71 @@ document.addEventListener("change",function(e){
       var p=JSON.parse(r.result);
       if(!p||!p.tables) throw 0;
       if(!confirm("Load this backup? It replaces the chart on this phone.")) return;
-      state=p; save(); render(); toast("Backup loaded");
+      state=p; ensureLayout(); ui.undo=[]; save(); render(); toast("Backup loaded");
     }catch(err){ toast("That file could not be read"); }
   };
   r.readAsText(f);
   e.target.value="";
 });
 document.addEventListener("blur",function(e){
-  if(e.target.id==="tname" && ui.sheet && ui.sheet.kind==="table"){
+  if(e.target.id==="tname" && ui.sheet && (ui.sheet.kind==="table"||ui.sheet.kind==="ltable")){
     var v=e.target.value.trim();
     if(v) updateTable(ui.sheet.id,function(t){return Object.assign({},t,{name:v});});
     ui.editingName=false; renderSheet(); render();
   }
 },true);
+
+/* ---------------- drag to move / resize (layout edit mode) ---------------- */
+document.addEventListener("pointerdown",function(e){
+  if(!ui.edit||ui.sheet||e.button>0) return;
+  var el=e.target.closest("[data-drag]"); if(!el) return;
+  var room=document.getElementById("room"); if(!room) return;
+  var kind=el.dataset.drag, resize=/-size$/.test(kind), base=kind.replace("-size","");
+  var node=resize?el.parentNode:el, id=node.dataset.id;
+  var obj=base==="t"?tableById(id):base==="dance"?state.layout.dance:markById(id);
+  if(!obj) return;
+  var dk=base==="t"?"t":"x", d=dimsOf(dk,obj);
+  drag={base:base,dk:dk,resize:resize,obj:obj,node:node,u:room.getBoundingClientRect().width/100,
+    sx:e.clientX,sy:e.clientY,ox:obj.x,oy:obj.y,ow:d.w,oh:d.h,moved:false,snap:JSON.stringify(state)};
+  try{ el.setPointerCapture(e.pointerId); }catch(_){}
+  e.preventDefault();
+});
+document.addEventListener("pointermove",function(e){
+  if(!drag) return;
+  var px=e.clientX-drag.sx, py=e.clientY-drag.sy;
+  if(!drag.moved){
+    if(Math.abs(px)+Math.abs(py)<6) return;
+    drag.moved=true; drag.node.classList.add("dragging");
+  }
+  var dx=px/drag.u, dy=py/drag.u, o=drag.obj, H=state.layout.h;
+  function sn(v){ return Math.round(v*2)/2; }
+  if(drag.resize){
+    var l=drag.ox-drag.ow/2, tp=drag.oy-drag.oh/2;
+    var w=Math.max(4,Math.min(100-l,sn(drag.ow+dx))), h=Math.max(3,Math.min(H-tp,sn(drag.oh+dy)));
+    o.w=w; o.h=h; o.x=l+w/2; o.y=tp+h/2;
+    drag.node.style.width=r2(w)+"cqw"; drag.node.style.height=r2(h)+"cqw";
+    var lb=drag.node.querySelector(".lbl"); if(lb) lb.className="lbl"+(h>w*1.3?" v":"");
+  } else {
+    o.x=sn(drag.ox+dx); o.y=sn(drag.oy+dy);
+    clampObj(drag.dk,o);
+    var d=dimsOf(drag.dk,o);
+    drag.node.style.left=r2(o.x-d.w/2)+"cqw"; drag.node.style.top=r2(o.y-d.h/2)+"cqw";
+  }
+});
+function endDrag(e){
+  if(!drag) return;
+  var d=drag; drag=null;
+  if(d.moved){
+    ui.undo.push(d.snap); if(ui.undo.length>40) ui.undo.shift();
+    save(); render();
+  } else if(e.type==="pointerup" && !d.resize){
+    if(d.base==="t") openSheet({kind:"ltable",id:d.obj.id});
+    else if(d.base==="dance") openSheet({kind:"ldance"});
+    else openSheet({kind:"lmark",id:d.obj.id});
+  }
+}
+document.addEventListener("pointerup",endDrag);
+document.addEventListener("pointercancel",endDrag);
 
 function copyText(text,cb){
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -915,6 +1346,7 @@ function copyText(text,cb){
 
 /* ---------------- go ---------------- */
 load();
+if(ensureLayout()) saveLocal();
 render();
 startSync();
 if(!syncOn()) setFlag("saved");
